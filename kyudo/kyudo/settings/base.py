@@ -92,12 +92,16 @@ WSGI_APPLICATION = 'kyudo.wsgi.application'
 
 ## Application definition
 INSTALLED_APPS = (
+    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third party apps
+    'social.apps.django_app.default',
 )
 
 ## Request Handling
@@ -138,6 +142,8 @@ TEMPLATE_DIRS       = (
 
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
     'django.core.context_processors.request',
+    'social.apps.django_app.context_processors.backends',
+    'social.apps.django_app.context_processors.login_redirect',
 )
 
 ## Uploaded Media
@@ -158,3 +164,19 @@ EMAIL_HOST_USER = 'server@bengfort.com'
 EMAIL_HOST_PASSWORD  = environ_setting("EMAIL_HOST_PASSWORD")
 EMAIL_PORT      = 587
 EMAIL_SUBJECT_PREFIX = '[KYUDO]'
+
+##########################################################################
+## Authentication
+##########################################################################
+
+LOGIN_URL = '/login/google-oauth2/'
+LOGIN_REDIRECT_URL = '/'
+
+AUTHENTICATION_BACKENDS = (
+    'social.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+## Google OAuth2 Credentials
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = environ_setting("GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = environ_setting("GOOGLE_OAUTH2_SECRET")

@@ -13,6 +13,11 @@ In order to run the server locally, follow these steps:
 
         $ export DJANGO_SETTINGS_MODULE=kyudo.settings.development
         $ export SECRET_KEY="super secret pass"
+        $ export GOOGLE_OAUTH2_KEY="googlekey"
+        $ export GOOGLE_OAUTH2_SECRET="googlesecret"
+
+    Note that this app is enabled with Google OAuth login, you'll need to
+    create your own Google credentials with the Google Developers console.
 
 4. Create a database on postgres (on the localhost) called kyudo
     Note, you can set the envvars DB_NAME, DB_USER, DB_PASS etc.

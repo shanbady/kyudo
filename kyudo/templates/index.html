@@ -10,5 +10,28 @@
       <p>Welcome to Kyudo, a research framework for goal driven query systems</p>
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-md-12">
+   <h2>Third-party authentication test</h2>
+
+     <p>
+       <ul>
+       {% if user and not user.is_anonymous %}
+         <li>
+           <a>Hello {{ user.get_full_name|default:user.username }}!</a>
+         </li>
+         <li>
+           <a href="{% url 'auth:logout' %}?next={{ request.path }}">Logout</a>
+         </li>
+       {% else %}
+         <li>
+           <a href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">Login with Google</a>
+         </li>
+       {% endif %}
+       </ul>
+     </p>
+    </div>
+   </div>
 </div>
 {% endblock %}
