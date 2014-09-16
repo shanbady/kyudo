@@ -178,7 +178,7 @@ EMAIL_SUBJECT_PREFIX = '[KYUDO]'
 ##########################################################################
 
 LOGIN_URL = '/login/google-oauth2/'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/app'
 
 AUTHENTICATION_BACKENDS = (
     'social.backends.google.GoogleOAuth2',
@@ -186,5 +186,5 @@ AUTHENTICATION_BACKENDS = (
 )
 
 ## Google OAuth2 Credentials
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = environ_setting("GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY    = environ_setting("GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = environ_setting("GOOGLE_OAUTH2_SECRET")

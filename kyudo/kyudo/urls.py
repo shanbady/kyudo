@@ -23,6 +23,7 @@ from rest_framework import routers
 
 from django.views.generic import TemplateView
 
+from kyudo.views import *
 from users.views import *
 
 ##########################################################################
@@ -43,7 +44,8 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 
     ## Static pages
-    url(r'^$', TemplateView.as_view(template_name='site/index.html'), name='home'),
+    url(r'^$', SplashPage.as_view(), name='home'),
+    url(r'^app/$', WebAppView.as_view(), name='app-root'),
     url(r'^terms/$', TemplateView.as_view(template_name='site/legal/terms.html'), name='terms'),
     url(r'^privacy/$', TemplateView.as_view(template_name='site/legal/privacy.html'), name='privacy'),
 
