@@ -8,7 +8,9 @@ urlpatterns = patterns('',
     url('', include('django.contrib.auth.urls', namespace='auth')),
 
     ## Static pages
-    url(r'^$', TemplateView.as_view(template_name='index.html'), name='home'),
+    url(r'^$', TemplateView.as_view(template_name='site/index.html'), name='home'),
+    url(r'^terms/$', TemplateView.as_view(template_name='site/legal/terms.html'), name='terms'),
+    url(r'^privacy/$', TemplateView.as_view(template_name='site/legal/privacy.html'), name='privacy'),
 
     ## Admin site
     url(r'^admin/', include(admin.site.urls)),
