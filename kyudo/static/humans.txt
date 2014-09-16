@@ -1,0 +1,19 @@
+/* TEAM */
+
+    Developer: Benjamin Bengfort
+    Contact: benjamin [at] bengfort.com
+    Twitter: @bbengfort
+    From: Washington, DC
+
+/* THANKS */
+
+    Adviser: Michael Cox
+    Contact: mcox [at] cs.umd.edu
+    From: University of Maryland
+
+/* SITE */
+
+    Last update: 2014/09/16
+    Language: English
+    Doctype: HTML5
+    IDE: Sublime Text 3
