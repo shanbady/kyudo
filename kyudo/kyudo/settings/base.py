@@ -93,6 +93,7 @@ WSGI_APPLICATION = 'kyudo.wsgi.application'
 ## Application definition
 INSTALLED_APPS = (
     # Django apps
+    'grappelli', # Must come before admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -118,13 +119,16 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-# Internationalization
-# https://docs.djangoproject.com/en/1.7/topics/i18n/
+## Internationalization
+## https://docs.djangoproject.com/en/1.7/topics/i18n/
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'UTC'
 USE_I18N      = True
 USE_L10N      = True
 USE_TZ        = True
+
+## Admin Title
+GRAPPELLI_ADMIN_TITLE = "Kyudo Admin"
 
 ##########################################################################
 ## Content (Static, Media, Templates)
