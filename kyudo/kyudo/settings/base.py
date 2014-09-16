@@ -103,6 +103,7 @@ INSTALLED_APPS = (
 
     # Third party apps
     'social.apps.django_app.default',
+    'rest_framework',
 
     # Kyudo apps
     'users',

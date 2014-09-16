@@ -1,20 +1,57 @@
+# kyudo.urls
+# The main URL router for the app
+#
+# Author:   Benjamin Bengfort <benjamin@bengfort.com>
+# Created:  Tue Sep 16 16:47:22 2014 -0400
+#
+# Copyright (C) 2014 University of Maryland
+# For license information, see LICENSE.txt
+#
+# ID: urls.py [] benjamin@bengfort.com $
+
+"""
+The main URL router for the app
+"""
+
+##########################################################################
+## Imports
+##########################################################################
+
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
+from rest_framework import routers
+
 from django.views.generic import TemplateView
-from users.views import ProfileView
+
+from users.views import *
+
+##########################################################################
+## Endpoint Discovery
+##########################################################################
+
+## API
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet)
+
+##########################################################################
+## URL Patterns for the app
+##########################################################################
 
 urlpatterns = patterns('',
-    ## Authentication
-    url('', include('social.apps.django_app.urls', namespace='social')),
-    url('', include('django.contrib.auth.urls', namespace='auth')),
-    url(r'^profile/$', ProfileView.as_view(), name='profile'),
+    ## Admin site
+    (r'^grappelli/', include('grappelli.urls')),
+    url(r'^admin/', include(admin.site.urls)),
 
     ## Static pages
     url(r'^$', TemplateView.as_view(template_name='site/index.html'), name='home'),
     url(r'^terms/$', TemplateView.as_view(template_name='site/legal/terms.html'), name='terms'),
     url(r'^privacy/$', TemplateView.as_view(template_name='site/legal/privacy.html'), name='privacy'),
 
-    ## Admin site
-    (r'^grappelli/', include('grappelli.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    ## Authentication
+    url('', include('social.apps.django_app.urls', namespace='social')),
+    url('', include('django.contrib.auth.urls', namespace='auth')),
+    url(r'^profile/$', ProfileView.as_view(), name='profile'),
+
+    ## REST API Urls
+    url(r'^api/', include(router.urls)),
 )
