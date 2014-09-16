@@ -102,6 +102,9 @@ INSTALLED_APPS = (
 
     # Third party apps
     'social.apps.django_app.default',
+
+    # Kyudo apps
+    'users',
 )
 
 ## Request Handling
