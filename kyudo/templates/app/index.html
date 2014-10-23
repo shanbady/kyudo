@@ -4,14 +4,31 @@
 
   {% block content %}
 
-    <div class="container">
+    <div id="questionApp" class="container">
       <div class="row">
 
-        <div class="col-md-12">
-          <p>App goes here.</p>
+        <div class="col-md-8 col-md-offset-2">
+          <form role="form">
+            <div class="input-group">
+              <input id="query" type="text" class="form-control">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">Submit</button>
+              </span>
+            </div>
+            <span class="help-block">Enter a question to enter into the database</span>
+            {% csrf_token %}
+          </form>
+
+          <ul id="question-list" class="list-unstyled"></ul>
+
         </div>
 
       </div>
     </div>
+
+    <!-- Templates -->
+    <script type="text/template" id="question-template">
+      <span class="question"><%- text %></span>
+    </script>
 
   {% endblock %}

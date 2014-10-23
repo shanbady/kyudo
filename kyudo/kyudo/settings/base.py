@@ -106,7 +106,8 @@ INSTALLED_APPS = (
     'rest_framework',
 
     # Kyudo apps
-    'users',
+    'users',  # Handles Google OAuth and Profiles
+    'fugato', # Initial query collection app
 )
 
 ## Request Handling

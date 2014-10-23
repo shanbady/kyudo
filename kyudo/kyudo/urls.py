@@ -25,6 +25,7 @@ from django.views.generic import TemplateView
 
 from kyudo.views import *
 from users.views import *
+from fugato.views import *
 
 ##########################################################################
 ## Endpoint Discovery
@@ -33,6 +34,7 @@ from users.views import *
 ## API
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'questions', QuestionViewSet)
 
 ##########################################################################
 ## URL Patterns for the app

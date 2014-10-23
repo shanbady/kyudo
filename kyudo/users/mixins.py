@@ -1,4 +1,4 @@
-# member.mixins
+# users.mixins
 # Authentication Mixins
 #
 # Author:   Benjamin Bengfort <benjamin@bengfort.com>

@@ -1,41 +1,41 @@
 {% load staticfiles %}
 <!doctype html>
 <html class="no-js" lang="">
-    <head>
-        {% block meta %}
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="author" content="{% block author %}Benjamin Bengfort{% endblock %}">
-        <meta name="keywords" content="{% block keywords %}UMD, RDF, Goals, Query, Research{% endblock %}">
-        <meta name="description" content="{% block description %}A research framework for goal driven query interfaces.{% endblock %}">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        {% endblock %}
+  <head>
+    {% block meta %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="{% block author %}Benjamin Bengfort{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}UMD, RDF, Goals, Query, Research{% endblock %}">
+    <meta name="description" content="{% block description %}A research framework for goal driven query interfaces.{% endblock %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% endblock %}
 
-        <title>{% block title %}Kyudo{% endblock %}</title>
+    <title>{% block title %}Kyudo{% endblock %}</title>
 
-        <!-- Shortcut Icons -->
-        <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+    <!-- Shortcut Icons -->
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
 
-        {% block stylesheets %}
-        <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
-        <link type="text/css" rel="stylesheet" href="{% static 'css/font-awesome.css' %}">
-        <link type="text/css" rel="stylesheet" href="{% static 'css/kyudo.css' %}">
-        {% endblock %}
+    {% block stylesheets %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/font-awesome.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/kyudo.css' %}">
+    {% endblock %}
+  </head>
+  <body>
 
-    </head>
-    <body>
+    {% block body %}
+    {% endblock %}
 
-        {% block body %}
-        {% endblock %}
+    {% block javascripts %}
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/underscore.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/backbone.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+    {% endblock %}
 
-        {% block javascripts %}
-        <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/underscore.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/backbone.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/bootstrap.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-        {% endblock %}
+    {% include 'snippets/analytics.html' %}
 
-        {% include 'snippets/analytics.html' %}
-    </body>
+  </body>
 </html>
