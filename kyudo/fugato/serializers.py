@@ -31,7 +31,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Question
-        fields = ('id', 'text')
+        fields = ('id', 'text', 'author', 'created', 'modified')
+        read_only_fields = ('author',)
 
     def validate(self, attrs):
        """
@@ -40,3 +41,36 @@ class QuestionSerializer(serializers.ModelSerializer):
        if self.opts.model.objects.filter(hash=signature(attrs['text'])).exists():
             raise serializers.ValidationError("question has already been asked")
        return attrs
+
+class AnswerSerializer(serializers.ModelSerializer):
+    """
+    Serializes the Answer object for use in the API.
+    """
+
+    class Meta:
+        model  = Answer
+        fields = ('id', 'text', 'author', 'question', 'created', 'modified')
+        read_only_fields = ('author', 'question', 'created', 'modified')
+
+class VotingSerializer(serializers.Serializer):
+    """
+    Serializes incoming votes.
+    """
+
+    vote    = serializers.IntegerField()
+    display = serializers.SerializerMethodField('get_vote_display')
+
+    def validate_vote(self, attrs, source):
+        value = attrs[source]
+        if value > 1 or value < -1:
+            raise serializers.ValidationError("vote must be between -1 and 1")
+        return attrs
+
+    def get_vote_display(self, obj):
+        displays = {
+            -1: "downvote",
+             0: "novote",
+             1: "upvote",
+        }
+
+        return displays[obj['vote']]

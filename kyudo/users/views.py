@@ -21,6 +21,7 @@ import urllib
 import hashlib
 
 from users.mixins import LoginRequired
+from users.permissions import IsAdminOrSelf
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView
 
@@ -28,6 +29,7 @@ from users.serializers import *
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.decorators import detail_route, list_route
 
 ##########################################################################
 ## Views
@@ -68,3 +70,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    @detail_route(methods=['post'], permission_classes=[IsAdminOrSelf])
+    def set_password(self, request, pk=None):
+        user = self.get_object()
+        serializer = PasswordSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user.set_password(serializer.data['password'])
+            user.save()
+            return Response({'status': 'password set'})
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)

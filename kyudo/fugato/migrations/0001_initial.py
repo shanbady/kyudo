@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'answers',
+                'get_latest_by': 'created',
             },
             bases=(models.Model,),
         ),
@@ -36,7 +37,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
-                ('vote', models.SmallIntegerField(choices=[(-1, b'downvote'), (1, b'upvote')])),
+                ('vote', models.SmallIntegerField(default=0, choices=[(-1, b'downvote'), (1, b'upvote'), (0, b'novote')])),
                 ('answer', models.ForeignKey(related_name=b'votes', to='fugato.Answer')),
                 ('user', models.ForeignKey(related_name=b'answer_votes', to=settings.AUTH_USER_MODEL)),
             ],
@@ -58,6 +59,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'questions',
+                'get_latest_by': 'created',
             },
             bases=(models.Model,),
         ),
@@ -67,7 +69,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
-                ('vote', models.SmallIntegerField(choices=[(-1, b'downvote'), (1, b'upvote')])),
+                ('vote', models.SmallIntegerField(default=0, choices=[(-1, b'downvote'), (1, b'upvote'), (0, b'novote')])),
                 ('question', models.ForeignKey(related_name=b'votes', to='fugato.Question')),
                 ('user', models.ForeignKey(related_name=b'question_votes', to=settings.AUTH_USER_MODEL)),
             ],
@@ -76,11 +78,19 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.AlterUniqueTogether(
+            name='questionvote',
+            unique_together=set([('question', 'user')]),
+        ),
         migrations.AddField(
             model_name='question',
             name='voters',
             field=models.ManyToManyField(related_name=b'+', through='fugato.QuestionVote', to=settings.AUTH_USER_MODEL),
             preserve_default=True,
+        ),
+        migrations.AlterUniqueTogether(
+            name='answervote',
+            unique_together=set([('answer', 'user')]),
         ),
         migrations.AddField(
             model_name='answer',

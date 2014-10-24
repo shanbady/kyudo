@@ -34,3 +34,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model  = User
         fields = ('id', 'username', 'first_name', 'last_name')
+
+class PasswordSerializer(serializers.Serializer):
+
+    password = serializers.CharField(max_length=200)
+    repeated = serializers.CharField(max_length=200)
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['repeated']:
+            raise serializers.ValidationError("passwords do not match!")
+        return attrs

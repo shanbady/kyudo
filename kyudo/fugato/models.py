@@ -38,6 +38,7 @@ class Question(TimeStampedModel):
 
     class Meta:
         db_table = "questions"
+        get_latest_by = 'created'
 
     def __unicode__(self):
         return self.text
@@ -52,6 +53,10 @@ class Answer(TimeStampedModel):
 
     class Meta:
         db_table = "answers"
+        get_latest_by = 'created'
+
+    def __unicode__(self):
+        return self.text
 
 ##########################################################################
 ## Models for Up/Down voting
@@ -62,11 +67,14 @@ class Voting(TimeStampedModel):
     Abstract Voting model for up/down voting
     """
 
-    BALLOT   = Choices((-1, 'downvote', 'downvote'), (1, 'upvote', 'upvote'))
-    vote     = models.SmallIntegerField( choices=BALLOT )
+    BALLOT   = Choices((-1, 'downvote', 'downvote'), (1, 'upvote', 'upvote'), (0, 'novote', 'novote'))
+    vote     = models.SmallIntegerField( choices=BALLOT, default=BALLOT.novote )
 
     class Meta:
         abstract = True
+        get_latest_by = "modified"
+        verbose_name  = "vote"
+        verbose_name_plural = "votes"
 
 class AnswerVote(Voting):
 
@@ -75,6 +83,7 @@ class AnswerVote(Voting):
 
     class Meta:
         db_table = "answer_voting"
+        unique_together = ('answer', 'user')
 
 class QuestionVote(Voting):
 
@@ -83,6 +92,7 @@ class QuestionVote(Voting):
 
     class Meta:
         db_table = "question_voting"
+        unique_together = ('question', 'user')
 
 ##########################################################################
 ## Signals
