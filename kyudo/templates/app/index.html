@@ -26,9 +26,14 @@
       </div>
     </div>
 
-    <!-- Templates -->
-    <script type="text/template" id="question-template">
-      <span class="question"><%- text %></span>
-    </script>
+  {% endblock %}
 
+  {% block javascripts %}
+    <!-- Scripts -->
+    {{ block.super }}
+    <script type="text/javascript">
+      require(['app/main'], function(app) {
+        app.start();
+      });
+    </script>
   {% endblock %}

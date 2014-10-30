@@ -63,7 +63,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
-class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
+class AnswerViewSet(viewsets.ModelViewSet):
 
     queryset = Answer.objects.order_by('-created')
     serializer_class = AnswerSerializer

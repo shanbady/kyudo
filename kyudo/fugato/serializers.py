@@ -50,7 +50,7 @@ class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Answer
         fields = ('id', 'text', 'author', 'question', 'created', 'modified')
-        read_only_fields = ('author', 'question', 'created', 'modified')
+        read_only_fields = ('author',)
 
 class VotingSerializer(serializers.Serializer):
     """

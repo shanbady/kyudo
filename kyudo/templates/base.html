@@ -28,11 +28,14 @@
     {% endblock %}
 
     {% block javascripts %}
-    <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/underscore.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/backbone.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/bootstrap.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/libs/underscore.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/backbone.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/utils/hotkeys.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/require.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/config/require.js' %}"></script>
     {% endblock %}
 
     {% include 'snippets/analytics.html' %}
