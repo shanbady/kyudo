@@ -1,0 +1,183 @@
+{% extends 'page.html' %}
+{% load staticfiles %}
+{# This page displays a tiny splash page with information #}
+
+  {% block content %}
+
+    <div id="questionApp" class="container">
+      <div class="row">
+
+        <div class="col-md-8 col-md-offset-2">
+          <form id="searchForm" role="form">
+            <div class="input-group">
+              <input id="query" type="text" class="form-control">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">Submit</button>
+              </span>
+            </div>
+            <span class="help-block">Enter a question to enter into the database</span>
+            {% csrf_token %}
+          </form>
+
+          <p id="results" class="text-info"></p>
+
+        </div>
+
+      </div>
+
+      <div class="row">
+        <div class="col-md-3 col-md-offset-2">
+          <ul id="question-list" class="list-unstyled"></ul>
+        </div>
+
+        <div class="col-md-5 col-md-offset-1">
+          <div id="infoCard" class="panel panel-default hidden">
+            <div id="infoCardHeading" class="panel-heading">
+              <h3 id="infoCardTitle" class="panel-title"></h3>
+            </div>
+            <div id="infoCardBody" class="panel-body">
+              <img src="{% static 'img/loader.gif' %}" id="spinLoader" class="center-block hidden" />
+              <div id="infoCardContent">
+                <div class="innerContent"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  {% endblock %}
+
+  {% block javascripts %}
+    <!-- Scripts -->
+    {{ block.super }}
+    <script type="text/javascript">
+
+      $(function(){
+
+          var searchForm  = $("#searchForm");
+          var searchInpt  = $("input#query");
+          var resultsTxt  = $("#results");
+          var resultsLst  = $("#question-list");
+          var infoCard    = $("#infoCard");
+          var infoTitle   = $("h3#infoCardTitle");
+          var infoBody    = $("div#infoCardContent");
+          var infoSpinner = $("img#spinLoader");
+
+          var endpoint   = "/api/freebase";
+
+          // Bind to form submit event
+          searchForm.submit(function(event) {
+            event.preventDefault();
+
+            // Begin freebase search
+            var val = searchInpt.val();
+            $.getJSON(endpoint, {'query': val}, onSearch)
+
+            // Reset the search input box
+            searchInpt.val("");
+            return false;
+          })
+
+          // Search result handler
+          function onSearch(data) {
+            resultsLst.empty();
+            var report = data.hits + " hits (cost " + data.cost + ") status " + data.status;
+            resultsTxt.text(report);
+
+            $.each(data.result, function(idx, obj) {
+              resultsLst.append(
+                $("<li>")
+                  .append(
+                    $('<a>')
+                    .attr("href", endpoint + obj.mid)
+                    .text(obj.name)
+                    .click(onTopic)
+                  )
+              );
+            })
+
+            // console.log(data);
+          }
+
+          // Topic result handler
+          function onTopic(event) {
+            event.preventDefault();
+
+            var $link = $(event.target)
+            var href  = $link.attr('href');
+
+            // Set the title of the info window
+            infoTitle.text($link.text())
+
+            // Show the info window and spinner
+            infoCard.addClass("show").removeClass("hidden");
+            infoSpinner.addClass("show").removeClass("hidden");
+            infoBody.addClass("hidden").removeClass("show");
+
+            // Kick off topic search
+            $.getJSON(href, function(data) {
+              // Add the new content
+              infoBody.html(
+                $("<div>")
+                  .addClass("innerContent")
+                  .append(
+                    $("<img>", {"src": data.image})
+                  )
+                  .append(
+                    $("<p>")
+                      .addClass("text-info")
+                      .text('Notable for "' + data.notability + '"')
+                  )
+                  .append(
+                    $("<ul>", {"id": "attrs-list"})
+                      .addClass("list-unstyled")
+                  )
+                  .append(
+                    $("<p>")
+                      .text(data.description)
+                  )
+                  .append(
+                    $("<ul>", {"id": "links-list"})
+                      .addClass("list-unstyled")
+                  )
+              );
+
+              $.each(data.attrs, function(idx, obj) {
+                $("ul#attrs-list")
+                  .append(
+                    $("<li>")
+                      .append(
+                        $("<span>", {"class": "attr-key"}).text(obj.key + ": ")
+                      )
+                      .append(
+                        $("<span>", {"class": "attr-value"}).text(obj.value)
+                      )
+                  )
+              });
+
+              $.each(data.links, function(key, val) {
+                $("ul#links-list")
+                  .addClass("list-inline")
+                  .append(
+                   $("<li>")
+                     .append(
+                       $("<a>", {"href": val})
+                         .text(key)
+                     )
+                  )
+              });
+
+              // Hide the info spinner and show the content
+              infoSpinner.addClass("hidden").removeClass("show");
+              infoBody.addClass("show").removeClass("hidden");
+            });
+
+            return false;
+          }
+
+      });
+
+    </script>
+  {% endblock %}

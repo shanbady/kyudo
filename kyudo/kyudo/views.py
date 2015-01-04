@@ -50,3 +50,10 @@ class WebAppView(LoginRequired, TemplateView):
     """
 
     template_name = "app/index.html"
+
+class DebugView(LoginRequired, TemplateView):
+    """
+    Used just to test stuff for development
+    """
+
+    template_name = "app/debug.html"

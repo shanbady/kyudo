@@ -190,6 +190,9 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY    = environ_setting("GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = environ_setting("GOOGLE_OAUTH2_SECRET")
 
+## Freebase API Keys
+FREEBASE_API_KEY                 = environ_setting("FREEBASE_API_KEY")
+
 ##########################################################################
 ## Django REST Framework
 ##########################################################################

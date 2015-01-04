@@ -30,3 +30,8 @@ In order to run the server locally, follow these steps:
         $ make runserver
 
 7. You should now be able to open a browser at http://127.0.0.1:8000
+
+## Possible Parsers ##
+
+- [Sempre](https://github.com/percyliang/sempre)
+- DEANNA

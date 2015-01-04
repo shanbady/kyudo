@@ -26,6 +26,7 @@ from django.views.generic import TemplateView
 from kyudo.views import *
 from users.views import *
 from fugato.views import *
+from freebase.views import *
 
 ##########################################################################
 ## Endpoint Discovery
@@ -36,6 +37,7 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
+router.register(r'freebase', FreebaseViewSet, "Freebase")
 
 ##########################################################################
 ## URL Patterns for the app
@@ -49,6 +51,7 @@ urlpatterns = patterns('',
     ## Static pages
     url(r'^$', SplashPage.as_view(), name='home'),
     url(r'^app/$', WebAppView.as_view(), name='app-root'),
+    url(r'^debug/$', DebugView.as_view(), name='app-debug'),
     url(r'^terms/$', TemplateView.as_view(template_name='site/legal/terms.html'), name='terms'),
     url(r'^privacy/$', TemplateView.as_view(template_name='site/legal/privacy.html'), name='privacy'),
 
