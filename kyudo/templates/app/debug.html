@@ -9,14 +9,17 @@
 
         <div class="col-md-8 col-md-offset-2">
           <form id="searchForm" role="form">
-            <div class="input-group">
-              <input id="query" type="text" class="form-control">
-              <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">Submit</button>
-              </span>
-            </div>
-            <span class="help-block">Enter a question to enter into the database</span>
-            {% csrf_token %}
+            <fieldset id="searchFieldSet">
+              <div class="input-group">
+                <input id="query" type="text" class="form-control">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit">Submit</button>
+                </span>
+              </div>
+              <span class="help-block">Enter a question to enter into the database</span>
+              <!-- <img src="{% static 'img/loader.gif' %}" id="parseLoader" class="" /> -->
+              {% csrf_token %}
+            </fieldset>
           </form>
 
           <p id="results" class="text-info"></p>
@@ -25,6 +28,30 @@
 
       </div>
 
+      <!-- Parse Results -->
+      <div class="row hidden" id="parseResults">
+
+        <div class="col-md-8 col-md-offset-2">
+          <p class="lead text-center" id="questionText"></p>
+        </div>
+
+        <!-- Left column -->
+        <div class="col-md-4 col-md-offset-2">
+          <pre id="parseTree"></pre>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-4">
+          <div id="extractionsBlock">
+            <h4>Concepts</h4>
+            <ul class="list-unstyled" id="concepts"></ul>
+            <h4>Entities</h4>
+            <ul class="list-unstyled" id="entities"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Freebase results -->
       <div class="row">
         <div class="col-md-3 col-md-offset-2">
           <ul id="question-list" class="list-unstyled"></ul>
@@ -58,6 +85,12 @@
 
           var searchForm  = $("#searchForm");
           var searchInpt  = $("input#query");
+          var searchFlds  = $("fieldset#searchFieldSet");
+          var parseRslt   = $("div#parseResults");
+          var questionTxt = $("p#questionText");
+          var parsePre    = $("pre#parseTree");
+          var conceptsLst = $("ul#concepts");
+          var entitiesLst = $("ul#entities");
           var resultsTxt  = $("#results");
           var resultsLst  = $("#question-list");
           var infoCard    = $("#infoCard");
@@ -65,20 +98,85 @@
           var infoBody    = $("div#infoCardContent");
           var infoSpinner = $("img#spinLoader");
 
-          var endpoint   = "/api/freebase";
+          var parser      = "/api/parse";
+          var endpoint    = "/api/freebase";
 
           // Bind to form submit event
           searchForm.submit(function(event) {
             event.preventDefault();
 
-            // Begin freebase search
-            var val = searchInpt.val();
-            $.getJSON(endpoint, {'query': val}, onSearch)
+            // Clean up the screen
+            infoCard.addClass("hidden").removeClass("show");
+            infoSpinner.addClass("hidden").removeClass("show");
+            infoBody.addClass("hidden").removeClass("show");
+            resultsLst.empty();
+            resultsTxt.text("");
 
-            // Reset the search input box
-            searchInpt.val("");
+            // Disable the search form
+            searchFlds.attr("disabled", true);
+            parseRslt.addClass("hidden").removeClass("show");
+
+            // Begin the parsing
+            var val = searchInpt.val();
+            $.getJSON(parser, {'query': val}, onParse)
+
             return false;
           })
+
+          // Parse result handler
+          function onParse(data) {
+            // Reset the search input box and lists
+            searchInpt.val("");
+            searchFlds.attr("disabled", false);
+            conceptsLst.empty();
+            entitiesLst.empty();
+
+            // Add the text and the parse
+            questionTxt.text(data.text);
+            parsePre.text(data.parse);
+            resultsTxt.text(data.status);
+
+            if (!data.parse) {
+              return
+            }
+
+            // Add the concepts and the entities
+            $.each(data.concepts, function(idx, obj) {
+              conceptsLst.append(
+                $("<li>")
+                  .append(
+                    $("<a>", {"href": "#"})
+                      .text(obj)
+                      .click(startSearch)
+                  )
+              )
+            })
+
+            $.each(data.entities, function(idx, obj) {
+              entitiesLst.append(
+                $("<li>")
+                  .append(
+                    $("<a>", {"href": "#", "title":obj.tag})
+                      .text(obj.term)
+                      .click(startSearch)
+                  )
+              )
+            })
+
+            // Show the Parse
+            parseRslt.removeClass("hidden").addClass("show")
+
+          }
+
+          // Click event to start a search
+          function startSearch(event) {
+            event.preventDefault();
+
+            var val = $(event.target).text();
+            $.getJSON(endpoint, {'query': val}, onSearch)
+
+            return false;
+          }
 
           // Search result handler
           function onSearch(data) {

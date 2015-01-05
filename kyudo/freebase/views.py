@@ -1,3 +1,5 @@
+import time
+
 from django.http import Http404
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -13,19 +15,37 @@ class ParserViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticated,)
 
     def list(self, request):
-        query = request.GET.get('query', None)
-        if not query:
-            return Response([])
+        query = request.GET.get('query', '')
 
         response = {
             'text': query
         }
 
-        tree = parse(query)[0]
-        response['parse'] = tree.pprint()
-        response['concepts'] = extract_noun_phrases(tree)
-        response['entities'] = entities(query)
+        start = time.time()
 
+        trees = parse(query)
+
+        if len(trees) > 0:
+            tree = trees[0]
+            response['parse'] = tree.pprint()
+            response['concepts'] = list(extract_noun_phrases(tree))
+            response['entities'] = list(entities(query))
+        else:
+            response['parse'] = None
+            response['concepts'] = []
+            response['entities'] = []
+
+
+        # Add the status
+        response["time"] = time.time() - start
+
+        if response['parse'] is not None:
+            status = 'parsed in %0.4f seconds; extracted %i concepts and %i entities'
+            status = status % (response['time'], len(response['concepts']), len(response['entities']))
+        else:
+            status = 'unable to parse input'
+
+        response['status'] = status
         return Response(response)
 
 
