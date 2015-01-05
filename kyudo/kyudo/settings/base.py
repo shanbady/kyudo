@@ -208,3 +208,15 @@ REST_FRAMEWORK = {
     'PAGINATE_BY_PARAM': 'per_page',
     'MAX_PAGINATE_BY': 200,
 }
+
+##########################################################################
+## Stanford Paths
+##########################################################################
+
+## NER JAR and Models
+STANFORD_NER_MODEL = None
+STANFORD_NER_JAR   = None
+
+## Parser JAR and Models
+STANFORD_PARSER_MODELS = None
+STANFORD_PARSER_JAR    = None

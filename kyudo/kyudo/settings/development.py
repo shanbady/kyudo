@@ -53,3 +53,15 @@ REST_FRAMEWORK = {
     'PAGINATE_BY_PARAM': 'per_page',
     'MAX_PAGINATE_BY': 200,
 }
+
+##########################################################################
+## Stanford Paths
+##########################################################################
+
+## NER JAR and Models
+STANFORD_NER_MODEL = os.path.expanduser("~/Development/stanford-ner-2014-01-04/classifiers/english.all.3class.distsim.crf.ser.gz")
+STANFORD_NER_JAR   = os.path.expanduser("~/Development/stanford-ner-2014-01-04/stanford-ner-2014-01-04.jar")
+
+## Parser JAR and Models
+STANFORD_PARSER_MODELS = os.path.expanduser("~/Development/stanford-parser-full-2014-10-31/stanford-parser-3.5.0-models.jar")
+STANFORD_PARSER_JAR    = os.path.expanduser("~/Development/stanford-parser-full-2014-10-31/stanford-parser.jar")
