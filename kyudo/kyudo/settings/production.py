@@ -29,7 +29,7 @@ DEBUG            = False
 TEMPLATE_DEBUG   = False
 
 ## Hosts
-ALLOWED_HOSTS    = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS    = ['kyudo.bengfort.com', 'robinhood', '104.237.146.93']
 
 ## Static files served by Nginx
 STATIC_ROOT = '/var/www/kyudo/static'
