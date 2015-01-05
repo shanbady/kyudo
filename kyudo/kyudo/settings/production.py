@@ -40,9 +40,9 @@ MEDIA_ROOT  = '/var/www/kyudo/media'
 ##########################################################################
 
 ## NER JAR and Models
-STANFORD_NER_MODEL = "/var/lib/stanford/stanford-ner-2014-01-04/classifiers/english.all.3class.distsim.crf.ser.gz"
-STANFORD_NER_JAR   = "/var/lib/stanford/stanford-ner-2014-01-04/stanford-ner-2014-01-04.jar"
+STANFORD_NER_MODEL = "/usr/share/stanford/ner/classifiers/english.all.3class.distsim.crf.ser.gz"
+STANFORD_NER_JAR   = "/usr/share/stanford/ner/stanford-ner-2014-01-04.jar"
 
 ## Parser JAR and Models
-STANFORD_PARSER_MODELS = "/var/lib/stanford/stanford-parser-full-2014-10-31/stanford-parser-3.5.0-models.jar"
-STANFORD_PARSER_JAR    = "/var/lib/stanford/stanford-parser-full-2014-10-31/stanford-parser.jar"
+STANFORD_PARSER_MODELS = "/usr/share/stanford/parser/stanford-parser-3.5.0-models.jar"
+STANFORD_PARSER_JAR    = "/usr/share/stanford/parser/stanford-parser.jar"
