@@ -39,6 +39,9 @@ MEDIA_ROOT  = '/var/www/kyudo/media'
 ## Stanford Paths
 ##########################################################################
 
+## Add the JAVA_HOME
+JAVA_HOME          = environ_setting("JAVA_HOME", "/usr/lib/jvm/java-8-oracle/")
+
 ## NER JAR and Models
 STANFORD_NER_MODEL = "/usr/share/stanford/ner/classifiers/english.all.3class.distsim.crf.ser.gz"
 STANFORD_NER_JAR   = "/usr/share/stanford/ner/stanford-ner-2014-01-04.jar"
