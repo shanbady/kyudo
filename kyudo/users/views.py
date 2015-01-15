@@ -17,9 +17,6 @@ Views for users and contributor management
 ## Imports
 ##########################################################################
 
-import urllib
-import hashlib
-
 from users.mixins import LoginRequired
 from users.permissions import IsAdminOrSelf
 from django.contrib.auth.models import User
@@ -43,23 +40,13 @@ class ProfileView(LoginRequired, TemplateView):
 
     template_name = "registration/profile.html"
 
-    def get_gravatar_url(self, email, size=200, default="mm"):
-        """
-        Computes the gravatar url from an email address
-        """
-        digest = hashlib.md5(email.lower()).hexdigest()
-        params = urllib.urlencode({'d': default, 's': str(size)})
-        grvurl = "http://www.gravatar.com/avatar/%s?%s" % (digest, params)
-        return grvurl
-
     def get_context_data(self, **kwargs):
         """
         Computes the gravatar from the user email and adds data to the
         context to render the template.
         """
         context = super(ProfileView, self).get_context_data(**kwargs)
-        context['profile']  = self.request.user
-        context['gravatar'] = self.get_gravatar_url(self.request.user.email)
+        context['user']  = self.request.user
         return context
 
 ##########################################################################
