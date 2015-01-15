@@ -18,11 +18,13 @@ Models for the fugato app.
 ##########################################################################
 
 from django.db import models
-from model_utils import Choices
-from kyudo.utils import signature
+from markdown import markdown
+from autoslug import AutoSlugField
 from django.dispatch import receiver
+from kyudo.utils import signature, nullable
 from django.db.models.signals import pre_save
 from model_utils.models import TimeStampedModel
+from django.contrib.contenttypes.fields import GenericRelation
 
 ##########################################################################
 ## Qustion and Answer Models
@@ -30,11 +32,25 @@ from model_utils.models import TimeStampedModel
 
 class Question(TimeStampedModel):
 
-    text     = models.CharField( max_length=512, null=False )  # The text of the question
-    hash     = models.CharField( max_length=28, unique=True )  # The normalized signature
-    related  = models.ManyToManyField( 'self' )                # Links between related questions
-    author   = models.ForeignKey( 'auth.User', related_name="questions" )
-    voters   = models.ManyToManyField( 'auth.User', through='fugato.QuestionVote', related_name="+")
+    text     = models.CharField( max_length=512, null=False )                     # The text of the question
+    slug     = AutoSlugField( populate_from='text', unique=True )                 # The slug of the question
+    hash     = models.CharField( max_length=28, unique=True, editable=False )     # The normalized signature
+    details  = models.TextField( help_text="Edit in Markdown", **nullable )       # Additional details about the question
+    details_rendered = models.TextField( editable=False, **nullable )             # HTML rendered details text from MD
+    parse    = models.TextField( editable=False, **nullable )                     # The syntactic parse of the question text
+    related  = models.ManyToManyField( 'self', editable=False )                   # Links between related questions
+    template = models.ForeignKey(                                                 # Question template for similarity
+                'freebase.TextTemplate',
+                related_name='questions',
+                editable=False, **nullable
+               )
+    author   = models.ForeignKey( 'auth.User', related_name='questions' )         # The author of the question
+    votes    = GenericRelation( 'voting.Vote', related_query_name='questions' )   # Vote on whether or not the question is relevant
+    topics   = models.ManyToManyField(                                            # Extracted concepts from parse
+                'freebase.Topic',
+                related_name='questions',
+                through='freebase.TopicAnnotation'
+               )
 
     class Meta:
         db_table = "questions"
@@ -45,11 +61,15 @@ class Question(TimeStampedModel):
 
 class Answer(TimeStampedModel):
 
-    text     = models.TextField( )                             # The text of the answer
-    related  = models.ManyToManyField( 'self' )                # Links between related responses
-    author   = models.ForeignKey( 'auth.User', related_name="answers" )
-    question = models.ForeignKey( 'fugato.Answer', related_name="answers" )
-    voters   = models.ManyToManyField( 'auth.User', through='fugato.AnswerVote', related_name="+")
+    text     = models.TextField(                                                 # The text of the answer (markdown)
+                null=False, blank=False,
+                help_text="Edit in Markdown"
+               )
+    text_rendered = models.TextField( editable=False, null=False )               # HTML rendered details of the question
+    related  = models.ManyToManyField( 'self' )                                  # Links between related responses
+    author   = models.ForeignKey( 'auth.User', related_name="answers" )          # The author of the answer
+    question = models.ForeignKey( 'fugato.Answer', related_name="answers" )      # The question this answer answers
+    votes    = GenericRelation( 'voting.Vote', related_query_name='answers' )    # Votes for the goodness of the answer
 
     class Meta:
         db_table = "answers"
@@ -59,45 +79,17 @@ class Answer(TimeStampedModel):
         return self.text
 
 ##########################################################################
-## Models for Up/Down voting
-##########################################################################
-
-class Voting(TimeStampedModel):
-    """
-    Abstract Voting model for up/down voting
-    """
-
-    BALLOT   = Choices((-1, 'downvote', 'downvote'), (1, 'upvote', 'upvote'), (0, 'novote', 'novote'))
-    vote     = models.SmallIntegerField( choices=BALLOT, default=BALLOT.novote )
-
-    class Meta:
-        abstract = True
-        get_latest_by = "modified"
-        verbose_name  = "vote"
-        verbose_name_plural = "votes"
-
-class AnswerVote(Voting):
-
-    answer   = models.ForeignKey( 'fugato.Answer', related_name='votes' )
-    user     = models.ForeignKey( 'auth.User', related_name='answer_votes' )
-
-    class Meta:
-        db_table = "answer_voting"
-        unique_together = ('answer', 'user')
-
-class QuestionVote(Voting):
-
-    question = models.ForeignKey( 'fugato.Question', related_name='votes' )
-    user     = models.ForeignKey( 'auth.User', related_name='question_votes' )
-
-    class Meta:
-        db_table = "question_voting"
-        unique_together = ('question', 'user')
-
-##########################################################################
 ## Signals
 ##########################################################################
 
 @receiver(pre_save, sender=Question)
 def question_normalization(sender, instance, *args, **kwargs):
     instance.hash = signature(instance.text)
+
+@receiver(pre_save, sender=Question)
+def question_render_markdown(sender, instance, *args, **kwargs):
+    instance.details_rendered = markdown(instance.details)
+
+@receiver(pre_save, sender=Answer)
+def answer_render_markdown(sender, instance, *args, **kwargs):
+    instance.text_rendered = markdown(instance.text)

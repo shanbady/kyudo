@@ -1,0 +1,51 @@
+# voting.models
+# ContentTypes based generic models for voting on anything!
+#
+# Author:   Benjamin Bengfort <bengfort@cs.umd.edu>
+# Created:  Thu Jan 15 16:02:31 2015 -0500
+#
+# Copyright (C) 2015 University of Maryland
+# For license information, see LICENSE.txt
+#
+# ID: models.py [] bengfort@cs.umd.edu $
+
+"""
+ContentTypes based generic models for voting on anything!
+"""
+
+##########################################################################
+## Imports
+##########################################################################
+
+from django.db import models
+from model_utils import Choices
+from model_utils.models import TimeStampedModel
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+
+
+##########################################################################
+## Models
+##########################################################################
+
+class Vote(TimeStampedModel):
+    """
+    Generic vote object for up and down voting things
+    """
+
+    BALLOT   = Choices((-1, 'downvote', 'downvote'), (1, 'upvote', 'upvote'), (0, 'novote', 'novote'))
+
+    # Data fields for the voting object
+    vote     = models.SmallIntegerField( choices=BALLOT, default=BALLOT.novote )
+    user     = models.ForeignKey( 'auth.User', related_name='votes' )
+
+    # Content types for a generic relationship (e.g. vote anything)
+    content_type   = models.ForeignKey( ContentType )
+    object_id      = models.PositiveIntegerField()
+    content_object = GenericForeignKey( 'content_type', 'object_id' )
+
+    class Meta:
+        get_latest_by = "modified"
+        verbose_name  = "vote"
+        verbose_name_plural = "votes"
+        unique_together = ('content_object', 'user')

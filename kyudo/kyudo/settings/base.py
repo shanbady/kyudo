@@ -24,6 +24,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 ##########################################################################
 
 import os
+
 from django.conf import global_settings
 
 ##########################################################################
@@ -106,8 +107,9 @@ INSTALLED_APPS = (
     'rest_framework',
 
     # Kyudo apps
-    'users',  # Handles Google OAuth and Profiles
-    'fugato', # Initial query collection app
+    'users',   # Handles Google OAuth and Profiles
+    'fugato',  # Initial query collection app
+    'freebase' # Handles the knowledge base and RDF api
 )
 
 ## Request Handling
