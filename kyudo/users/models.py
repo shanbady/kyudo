@@ -51,7 +51,7 @@ class Profile(models.Model):
 
     @property
     def gravatar_icon(self):
-        return self.get_gravatar_url(size=62)
+        return self.get_gravatar_url(size=24)
 
     @property
     def full_name(self):

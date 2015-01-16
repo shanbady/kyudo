@@ -1,8 +1,26 @@
 {% extends "rest_framework/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Kyudo API{% endblock %}
 
-{% block branding %}<a class='brand' rel="nofollow" href='/'>Kyudo API</a>{% endblock %}
+{% block bootstrap_theme %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <style type="text/css">
+      ul.breadcrumb {
+        margin: 30px 0 0 0 !important;
+        background-color: #f7f7f9;
+        border: 1px solid #e1e1e8;
+      }
+    </style>
+{% endblock %}
+
+{% block branding %}
+  <a class="navbar-brand" href="/">
+    <img class="img-brand pull-left" src="{% static 'img/logo.png' %}"
+         alt="Kyudo" style="width:20px; height:20px; margin: -1px 6px 0 0" />
+    Kyudo
+  </a>
+{% endblock %}
 
 {% block userlinks %}
 {% if user.is_authenticated %}
@@ -18,10 +36,10 @@
     <li><a href="{% url 'profile' %}">View Profile</a></li>
     <li><a href="{% url 'auth:logout' %}">Log out</a></li>
   </ul>
+</li>
 {% else %}
 <li><a href="{% url 'social:begin' 'google-oauth2' %}"><b class=""></b> Log in</a></li>
 {% endif %}
-</li>
 {% endblock %}
 
 {% block footer %}

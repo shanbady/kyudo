@@ -19,21 +19,35 @@ Serializers for the members models
 
 from users.models import *
 from rest_framework import serializers
-from rest_framework.compat import smart_text
 from django.contrib.auth.models import User
+from users.models import Profile
 
 ##########################################################################
 ## Serializers
 ##########################################################################
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializes the Profile object to embed into the User JSON
+    """
+
+    gravatar = serializers.CharField(read_only=True)
+    location = serializers.StringRelatedField()
+
+    class Meta:
+        model  = Profile
+        fields = ('biography', 'gravatar', 'location')
 
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializes the User object for use in the API.
     """
 
+    profile = ProfileSerializer(many=False, read_only=True)
+
     class Meta:
         model  = User
-        fields = ('id', 'username', 'first_name', 'last_name')
+        fields = ('id', 'username', 'first_name', 'last_name', 'profile')
 
 class PasswordSerializer(serializers.Serializer):
 

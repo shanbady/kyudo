@@ -16,6 +16,13 @@
 
   </div>
 
+  <!-- modals for navbar interaction -->
+  <div id="modals">
+  {% block modals %}
+    {% include 'components/modals.html' %}
+  {% endblock %}
+  </div>
+
   {% block footer %}
   {% include 'components/footer.html' %}
   {% endblock %}
