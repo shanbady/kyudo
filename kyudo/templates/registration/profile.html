@@ -38,6 +38,15 @@
           /*color: #999;*/
       }
 
+      .editable-item:hover a:after{
+        content: "edit";
+      }
+
+      .editable-item a {
+        font-size: small;
+        margin-left 6px;
+      }
+
       .number-stats li {
           width: 32%;
       }
@@ -94,7 +103,11 @@
         <hr class="profile-sep" />
         <ul class="list-unstyled">
           {% if user.profile.location %}
-          <li id="userLocation"><i class="fa fa-map-marker"></i> {{ user.profile.location }}</li>
+          <li id="userLocation" class="editable-item">
+            <i class="fa fa-map-marker"></i>
+            {{ user.profile.location }}
+            <a href="#" data-toggle="modal" data-target="#setLocationModal"></a>
+          </li>
           {% else %}
           <li id="userLocation">
             <i class="fa fa-map-marker"></i>
@@ -188,7 +201,11 @@
   </script>
 
   <script type="text/template" class="template" id="userLocationTemplate">
-  <li id="userLocation"><i class="fa fa-map-marker"></i> <%= location %></li>
+    <li id="userLocation" class="editable-item">
+      <i class="fa fa-map-marker"></i>
+      <%= location %>
+      <a href="#" data-toggle="modal" data-target="#setLocationModal"></a>
+    </li>
   </script>
 
   <script type="text/javascript">
