@@ -20,6 +20,7 @@ Models for storing RDF Topics
 from django.db import models
 from jsonfield import JSONField
 from kyudo.utils import nullable
+from freebase.managers import TopicManager
 from model_utils.models import TimeStampedModel
 
 ##########################################################################
@@ -40,6 +41,11 @@ class Topic(models.Model):
     image       = models.URLField( max_length=2000, **nullable ) # A link to the image of the Topic
     attrs       = JSONField( **nullable )                        # A JSON list of arbitrary attributes
     description = models.TextField( **nullable )                 # A textual description of the topic
+
+
+    ## Set a custom manager on the topics
+    objects     = TopicManager()
+
 
     class Meta:
         db_table = "topics"

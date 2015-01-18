@@ -62,5 +62,5 @@ urlpatterns = patterns('',
     url(r'^profile/$', ProfileView.as_view(), name='profile'),
 
     ## REST API Urls
-    url(r'^api/', include(router.urls)),
+    url(r'^api/', include(router.urls, namespace="api")),
 )

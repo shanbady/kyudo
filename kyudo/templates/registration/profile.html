@@ -1,17 +1,306 @@
 {% extends 'page.html' %}
 {% load staticfiles %}
 
+{% block stylesheets %}
+  {{ block.super }}
+  <style type="text/css">
+      #profile-sidebar h2 {
+          font-size: 1.7em;
+          margin-bottom: 2px;
+      }
+
+      #profile-sidebar h3 {
+          margin-top: 0;
+          font-weight: normal;
+          font-size: 1.4em;
+      }
+
+      #profile-sidebar img {
+          width: 100%;
+      }
+
+      #profile-sidebar ul {
+          font-size: 1.15em;
+      }
+
+      #profile-sidebar ul li {
+          margin-bottom: 3px;
+      }
+
+      #profile-sidebar ul i, span.fa {
+          margin-right: 8px;
+          width: 18px;
+          text-align: center;
+      }
+
+      #profile-sidebar ul i {
+          font-size: .94em;
+          /*color: #999;*/
+      }
+
+      .number-stats li {
+          width: 32%;
+      }
+
+      .number-stats a {
+          display: block;
+          color: #333;
+          width: 100%;
+          text-align: center;
+          text-decoration: none;
+      }
+
+      .number-stats a:hover {
+          color: #428bca;
+          text-decoration: none;
+      }
+
+      .number-stats a span {
+          display: block;
+          width: 100%;
+          text-align: center;
+      }
+
+      .statistic {
+          font-size: 1.8em;
+          font-weight: bold;
+          margin: 0;
+      }
+
+      .statlabel {
+          font-size: 0.7em;
+          color: #999;
+          margin: 0;
+      }
+  </style>
+{% endblock %}
+
 {% block content %}
 
   <div class="container">
+    <!-- Main Row in Container -->
     <div class="row">
-      <div class="col-md-3 col-md-offset-1">
-        <img class="img-responsive img-thumbnail" src="{{ user.profile.gravatar }}" alt="Gravatar" />
-      </div>
-      <div class="col-md-7">
-        <h1>{{ user.profile.full_name }}</h1>
-      </div>
+
+      <!-- Image/Profile sidebar on left -->
+      <div id="profile-sidebar" class="col-sm-3">
+
+        <!-- Profile title box with picture -->
+        <img class="img-responsive img-rounded" src="{{ user.profile.gravatar }}"
+             alt="Gravatar" title="{{ user.full_name }}" />
+        <h2>{{ user.profile.full_name }}</h2>
+        <h3 class="text-muted">{{ user.username }}</h3>
+
+        <!-- Heads up profile info -->
+        <hr class="profile-sep" />
+        <ul class="list-unstyled">
+          {% if user.profile.location %}
+          <li id="userLocation"><i class="fa fa-map-marker"></i> {{ user.profile.location }}</li>
+          {% else %}
+          <li id="userLocation">
+            <i class="fa fa-map-marker"></i>
+            <a href="#" data-toggle="modal" data-target="#setLocationModal">Set Location</a>
+          </li>
+          {% endif %}
+          <li id="userEmail"><i class="fa fa-envelope"></i> {{ user.email }}</li>
+          <li id="userJoined"><i class="fa fa-clock-o"></i> Joined on {{ user.date_joined|date }}</li>
+        </ul>
+
+        <!-- Profile statistics -->
+        <hr class="profile-sep" />
+        <ul class="number-stats list-unstyled list-inline">
+          <li>
+            <a href="#">
+              <span class="statistic">{{ user.questions.count }}</span>
+              <span class="statlabel">questions</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <span class="statistic">{{ user.answers.count }}</span>
+              <span class="statlabel">answers</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <span class="statistic">{{ user.annotations.count }}</span>
+              <span class="statlabel">annotations</span>
+            </a>
+          </li>
+        </ul>
+
+      </div><!-- image/profile sidebar ends -->
+
+      <!-- Main Profile Area -->
+      <div id="profile-content" class="col-sm-9">
+
+      </div><!-- main profile area ends -->
     </div>
   </div>
 
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  <div id="setLocationModal" class="modal fade" tabindex="-1"
+       role="dialog" aria-labelledby="setLocationModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">Set Location</h4>
+        </div>
+        <div class="modal-body">
+          <ol id="locationResults" class="hidden"></ol>
+          <form id="setLocationForm" class="show">
+            <div class="form-group">
+              <input id="txtLocation" type="text" class="form-control" rows="2" placeholder="Enter Location"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button id="btnResetLocation" type="button" class="btn btn-default btn-sm invisible">Back</button>
+
+          <button id="btnSearchLocation" type="submit" class="btn btn-primary btn-sm" form="setLocationForm">Search</button>
+        </div>
+
+      </div> <!-- .modal-content -->
+    </div> <!-- .modal-dialog -->
+  </div> <!-- .modal -->
+
+
+  {% csrf_token %}
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+  <script type="text/template" class="template" id="locationItemTemplate">
+    <li>
+      <a href="<%= link %>" title="Set as Location" class="locationResult"
+         data-mid="<%= mid %>" data-title="<%= name %>">
+        <%= name %>
+      </a>
+      <small class="text-muted"><%= notable %></small>
+    </li>
+  </script>
+
+  <script type="text/template" class="template" id="userLocationTemplate">
+  <li id="userLocation"><i class="fa fa-map-marker"></i> <%= location %></li>
+  </script>
+
+  <script type="text/javascript">
+    (function($) {
+        $(document).ready(function() {
+
+            // Configure the profile application
+            var csrfToken   = $('input[name="csrfmiddlewaretoken"]').val();
+            $.ajaxSetup({headers: {"X-CSRFToken": csrfToken}});
+            console.log("profile application ready")
+
+            var locationTmpl = _.template($("#locationItemTemplate").html())
+            var userLocTmpl  = _.template($("#userLocationTemplate").html())
+            var locationForm = $("#setLocationForm");
+            var txtLocation  = $("#txtLocation");
+            var resultsList  = $("#locationResults");
+            var endpoint     = "/api/freebase";
+            var userDetail   = "{{ user.profile.get_api_detail_url }}";
+
+            // Location form submit event
+            $(locationForm).submit(function(event) {
+              event.preventDefault()
+
+              var val = txtLocation.val();
+              console.log(val);
+              $.getJSON(endpoint, {'query': val}, onLocation);
+
+              return false;
+            });
+
+            // Handle close button
+            $("#setLocationModal button.close").click(function(event) {
+              resetLocationModal();
+            });
+
+            // Handle back button pressed
+            $("#btnResetLocation").click(function(event) {
+              resetLocationModal();
+            });
+
+            // Handle data fetched from the server
+            function onLocation(data) {
+              $("#btnResetLocation").removeClass('invisible');
+              $("#btnSearchLocation").attr('disabled', 'disabled');
+
+              resultsList.empty();
+              $.each(data.result, function(idx, obj) {
+                if (idx > 5) {
+                  return false
+                }
+
+                resultsList.append(
+                  locationTmpl({
+                    link: endpoint + obj.mid,
+                    mid: obj.mid,
+                    name: obj.name,
+                    notable: obj.notable ? obj.notable.name : ""
+                  })
+                );
+
+              })
+
+              // Add location result click handler
+              $(".locationResult").click(onSelectLocation);
+
+              hide(locationForm);
+              show(resultsList);
+            }
+
+            // Handle selected location
+            function onSelectLocation(event) {
+              event.preventDefault()
+
+              var data = $(event.target).data();
+              $("#btnResetLocation").attr('disabled', 'disabled');
+              $("#btnSearchLocation").attr('disabled', 'disabled');
+
+              // Post the location to the user detail endpoint
+              locationEndpoint = userDetail + "set_location/"
+              $.post(locationEndpoint, data, function(data) {
+                $("#userLocation").replaceWith(
+                  userLocTmpl({ location: data.location.title })
+                );
+
+                $("#setLocationModal").modal('hide');
+                resetLocationModal();
+              });
+
+              return false;
+            }
+
+            // Helper function to hide elements
+            function hide(elem) {
+              elem.addClass("hidden").removeClass("show");
+            }
+
+            // Helper function to show elements
+            function show(elem) {
+              elem.addClass("show").removeClass("hidden");
+            }
+
+            // Helper function to reset location modal
+            function resetLocationModal() {
+              hide(resultsList);
+              show(locationForm);
+              $("#btnResetLocation").addClass('invisible');
+              $("#btnResetLocation").removeAttr('disabled');
+              $("#btnSearchLocation").removeAttr('disabled');
+              txtLocation.val("");
+            }
+
+        });
+    })(jQuery);
+  </script>
 {% endblock %}

@@ -22,9 +22,11 @@ import hashlib
 
 from django.db import models
 from kyudo.utils import nullable
+from freebase.models import Topic
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.core.urlresolvers import reverse
 
 ##########################################################################
 ## UserProfile model
@@ -61,6 +63,19 @@ class Profile(models.Model):
     def full_email(self):
         email = "%s <%s>" % (self.full_name, self.user.email)
         return email.strip()
+
+    def get_api_detail_url(self):
+        """
+        Returns the API detail endpoint for the object
+        """
+        return reverse('api:user-detail', args=(self.pk,))
+
+    def set_location(self, mid):
+        """
+        Set the location topic on the user profile by mid
+        """
+        location = Topic.objects.merge(mid)
+        self.location = location
 
     def __unicode__(self):
         return self.full_email

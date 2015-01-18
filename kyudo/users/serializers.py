@@ -58,3 +58,8 @@ class PasswordSerializer(serializers.Serializer):
         if attrs['password'] != attrs['repeated']:
             raise serializers.ValidationError("passwords do not match!")
         return attrs
+
+class LocationSerializer(serializers.Serializer):
+
+    mid   = serializers.CharField(max_length=50)
+    title = serializers.CharField(max_length=255, required=False)

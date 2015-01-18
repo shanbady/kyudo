@@ -69,3 +69,18 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'], permission_classes=[IsAdminOrSelf])
+    def set_location(self, request, pk=None):
+        user = self.get_object()
+        serializer = LocationSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user.profile.set_location(serializer.data['mid'])
+            user.profile.save()
+
+            location_serializer = LocationSerializer(user.profile.location)
+            return Response({'status': 'location set', 'location': location_serializer.data })
+
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
