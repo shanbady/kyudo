@@ -38,7 +38,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model  = Profile
         fields = ('biography', 'gravatar', 'location')
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializes the User object for use in the API.
     """
@@ -47,7 +47,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'profile')
+        fields = ('url', 'username', 'first_name', 'last_name', 'profile')
+        extra_kwargs = {
+            'url': {'view_name': 'api:user-detail',}
+        }
 
 class PasswordSerializer(serializers.Serializer):
 

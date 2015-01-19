@@ -44,6 +44,15 @@ class Vote(TimeStampedModel):
     object_id      = models.PositiveIntegerField()
     content_object = GenericForeignKey( 'content_type', 'object_id' )
 
+    def __unicode__(self):
+        action = {
+            -1: "down voted",
+            0:  "no voted",
+            1:  "up voted",
+        }[self.vote]
+
+        return u"%s %s %s" % (unicode(self.user), action, unicode(self.content_object))
+
     class Meta:
         get_latest_by = "modified"
         verbose_name  = "vote"

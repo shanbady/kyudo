@@ -22,8 +22,8 @@ from markdown import markdown
 from autoslug import AutoSlugField
 from django.dispatch import receiver
 from kyudo.utils import signature, nullable
-from django.db.models.signals import pre_save
 from model_utils.models import TimeStampedModel
+from django.db.models.signals import pre_save
 from django.contrib.contenttypes.fields import GenericRelation
 
 ##########################################################################
@@ -88,8 +88,10 @@ def question_normalization(sender, instance, *args, **kwargs):
 
 @receiver(pre_save, sender=Question)
 def question_render_markdown(sender, instance, *args, **kwargs):
-    instance.details_rendered = markdown(instance.details)
+    if instance.details is not None:
+        instance.details_rendered = markdown(instance.details)
 
 @receiver(pre_save, sender=Answer)
 def answer_render_markdown(sender, instance, *args, **kwargs):
-    instance.text_rendered = markdown(instance.text)
+    if instance.text is not None:
+        instance.text_rendered = markdown(instance.text)

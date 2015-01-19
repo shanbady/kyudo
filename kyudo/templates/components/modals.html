@@ -1,3 +1,6 @@
+    <!-- CSRF for AJAX requests -->
+    {% csrf_token %}
+
     <!-- Ask Question Modals -->
     <div id="askQuestionModal" class="modal fade" tabindex="-1"
          role="dialog" aria-labelledby="askQuestionModal" aria-hidden="true">
@@ -13,12 +16,20 @@
           <div class="modal-body">
             <form id="askQuestionForm">
               <div class="form-group">
-                <textarea class="form-control" rows="2" placeholder="Enter Question Text"></textarea>
+                <textarea id="txtQuestion" class="form-control" rows="2" placeholder="Enter Question Text"></textarea>
+                <span id="txtQuestionHelpBlock" class="help-block"></span>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button id="btnAskQuestionNext" type="button" class="btn btn-primary btn-sm">Next</button>
+            <button id="btnAskQuestionBack" type="button"
+                    class="btn btn-default btn-sm invisible">
+              Back
+            </button>
+            <button id="btnAskQuestionNext" type="submt"
+                    class="btn btn-primary btn-sm" form="askQuestionForm">
+              Next
+            </button>
           </div>
 
         </div> <!-- .modal-content -->

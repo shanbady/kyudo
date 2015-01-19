@@ -3,85 +3,7 @@
 
 {% block stylesheets %}
   {{ block.super }}
-  <style type="text/css">
-      #profile-sidebar h2 {
-          font-size: 1.7em;
-          margin-bottom: 2px;
-      }
-
-      #profile-sidebar h3 {
-          margin-top: 0;
-          font-weight: normal;
-          font-size: 1.4em;
-      }
-
-      #profile-sidebar img {
-          width: 100%;
-      }
-
-      #profile-sidebar ul {
-          font-size: 1.15em;
-      }
-
-      #profile-sidebar ul li {
-          margin-bottom: 3px;
-      }
-
-      #profile-sidebar ul i, span.fa {
-          margin-right: 8px;
-          width: 18px;
-          text-align: center;
-      }
-
-      #profile-sidebar ul i {
-          font-size: .94em;
-          /*color: #999;*/
-      }
-
-      .editable-item:hover a:after{
-        content: "edit";
-      }
-
-      .editable-item a {
-        font-size: small;
-        margin-left 6px;
-      }
-
-      .number-stats li {
-          width: 32%;
-      }
-
-      .number-stats a {
-          display: block;
-          color: #333;
-          width: 100%;
-          text-align: center;
-          text-decoration: none;
-      }
-
-      .number-stats a:hover {
-          color: #428bca;
-          text-decoration: none;
-      }
-
-      .number-stats a span {
-          display: block;
-          width: 100%;
-          text-align: center;
-      }
-
-      .statistic {
-          font-size: 1.8em;
-          font-weight: bold;
-          margin: 0;
-      }
-
-      .statlabel {
-          font-size: 0.7em;
-          color: #999;
-          margin: 0;
-      }
-  </style>
+  <link type="text/css" rel="stylesheet"  href="{% static 'css/profile.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -182,9 +104,6 @@
       </div> <!-- .modal-content -->
     </div> <!-- .modal-dialog -->
   </div> <!-- .modal -->
-
-
-  {% csrf_token %}
 {% endblock %}
 
 {% block javascripts %}
@@ -230,7 +149,7 @@
               event.preventDefault()
 
               var val = txtLocation.val();
-              console.log(val);
+              txtLocation.attr('disabled', 'disabled');
               $.getJSON(endpoint, {'query': val}, onLocation);
 
               return false;
@@ -314,6 +233,7 @@
               $("#btnResetLocation").addClass('invisible');
               $("#btnResetLocation").removeAttr('disabled');
               $("#btnSearchLocation").removeAttr('disabled');
+              txtLocation.removeAttr('disabled');
               txtLocation.val("");
             }
 

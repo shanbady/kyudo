@@ -69,3 +69,51 @@ img.navbar-gravatar {
   width: 22px;
   height: 22px;
 }
+
+/* Editable items */
+
+.editable-item:hover a:after{
+  content: "edit";
+}
+
+.editable-item a {
+  font-size: small;
+  margin-left 6px;
+}
+
+/* Number stats inline */
+
+.number-stats li {
+    width: 32%;
+}
+
+.number-stats a {
+    display: block;
+    color: #333;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+}
+
+.number-stats a:hover {
+    color: #428bca;
+    text-decoration: none;
+}
+
+.number-stats a span {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.statistic {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.statlabel {
+    font-size: 0.7em;
+    color: #999;
+    margin: 0;
+}

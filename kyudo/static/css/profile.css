@@ -1,0 +1,35 @@
+/* Profile specific styles */
+
+#profile-sidebar h2 {
+    font-size: 1.7em;
+    margin-bottom: 2px;
+}
+
+#profile-sidebar h3 {
+    margin-top: 0;
+    font-weight: normal;
+    font-size: 1.4em;
+}
+
+#profile-sidebar img {
+    width: 100%;
+}
+
+#profile-sidebar ul {
+    font-size: 1.15em;
+}
+
+#profile-sidebar ul li {
+    margin-bottom: 3px;
+}
+
+#profile-sidebar ul i, span.fa {
+    margin-right: 8px;
+    width: 18px;
+    text-align: center;
+}
+
+#profile-sidebar ul i {
+    font-size: .94em;
+    /*color: #999;*/
+}

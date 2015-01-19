@@ -24,33 +24,44 @@ from rest_framework import serializers
 ## Serializers
 ##########################################################################
 
-class QuestionSerializer(serializers.ModelSerializer):
+class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     """
-    Serializes the User object for use in the API.
+    Serializes the Question object for use in the API.
     """
+
+    author = serializers.HyperlinkedRelatedField(
+                default=serializers.CurrentUserDefault(),
+                read_only=True,
+                view_name="api:user-detail",
+             )
 
     class Meta:
         model  = Question
-        fields = ('id', 'text', 'author', 'created', 'modified')
-        read_only_fields = ('author',)
+        fields = ('url', 'text', 'author', 'slug')
+        extra_kwargs = {
+            'url': {'view_name': 'api:question-detail',}
+        }
 
     def validate(self, attrs):
        """
        Check that the question hasn't already been asked.
        """
-       if self.opts.model.objects.filter(hash=signature(attrs['text'])).exists():
+       if Question.objects.filter(hash=signature(attrs['text'])).exists():
             raise serializers.ValidationError("question has already been asked")
        return attrs
 
-class AnswerSerializer(serializers.ModelSerializer):
+class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializes the Answer object for use in the API.
     """
 
     class Meta:
         model  = Answer
-        fields = ('id', 'text', 'author', 'question', 'created', 'modified')
+        fields = ('url', 'text', 'author', 'question', 'created', 'modified')
         read_only_fields = ('author',)
+        extra_kwargs = {
+            'url': {'view_name': 'api:answer-detail',}
+        }
 
 class VotingSerializer(serializers.Serializer):
     """
