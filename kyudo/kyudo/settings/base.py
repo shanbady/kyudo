@@ -223,3 +223,6 @@ STANFORD_NER_JAR   = None
 ## Parser JAR and Models
 STANFORD_PARSER_MODELS = None
 STANFORD_PARSER_JAR    = None
+
+## Parse on Save (change this to False if it's taking too long)
+STANFORD_PARSE_ON_SAVE = True

@@ -2,13 +2,78 @@
 {% load staticfiles %}
 {# Displays all the information about a particular question #}
 
+  {% block stylesheets %}
+    {{ block.super }}
+    <style type="text/css">
+      .question-sidebar {
+        margin-top: 18px;
+      }
+
+      .question-actions {
+        margin: 10px 0;
+      }
+    </style>
+  {% endblock %}
+
   {% block content %}
     <div class="container">
+      <!-- Questions get a three column layout -->
       <div class="row">
-        <div class="col-md-12 page-header">
-          <h1>{{ object }}</h1>
+
+        <!-- Left Column -->
+        <div class="col-md-2 question-sidebar">
+          <h5>Concepts</h5>
+          <ul class="list-unstyled">
+            {% for annotation in question.annotations.all %}
+            {% if annotation.is_ambiguous %}
+            <li><a href="#">{{ annotation.text }}</a></li>
+            {% else %}
+            <li><a href="#">{{ annotation.topic }}</a></li>
+            {% endif %}
+            {% empty %}
+            <li>No extracted concepts</li>
+            {% endfor %}
+          </ul>
+        </div><!-- end left column -->
+
+        <!-- Middle Column -->
+        <div class="col-md-8">
+          <h2>{{ question.text }}</h2>
+          <p class="text-muted">
+            <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
+          </p>
+
+          <div class="question-actions">
+            <button class="btn btn-default btn-xs" type="button">
+              <i class="fa fa-thumbs-up"></i> | {{ question.votes.upvotes.count }}
+            </button>
+
+            <button class="btn btn-default btn-xs" type="button">
+              <i class="fa fa-thumbs-down"></i> | {{ question.votes.downvotes.count }}
+            </button>
+          </div>
+
+          <div class="question-details">
+            {{ question.details_rendered|safe }}
+          </div>
+
+          <hr />
+          <pre>{{ question.parse }}</pre>
+          <p class="text-info">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
+        </div><!-- end middle column -->
+
+        <!-- Right column -->
+        <div class="col-md-2 question-sidebar">
+          <h5>Related Questions</h5>
+          <ul class="list-unstyled">
+            {% for related in question.related.all %}
+            <li><a href="{{ related.get_absolute_url }}">{{ related }}</a></li>
+            {% empty %}
+            <li>No related questions found</li>
+            {% endfor %}
+          </ul>
         </div>
+
       </div>
     </div>
-
   {% endblock %}

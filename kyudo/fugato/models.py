@@ -17,8 +17,11 @@ Models for the fugato app.
 ## Imports
 ##########################################################################
 
+import time
+
 from django.db import models
 from voting.models import Vote
+from django.conf import settings
 from autoslug import AutoSlugField
 from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
@@ -26,6 +29,7 @@ from django.db.models.signals import pre_save
 from django.core.urlresolvers import reverse
 from kyudo.utils import signature, nullable, htmlize
 from django.contrib.contenttypes.fields import GenericRelation
+from freebase.nlp import entities, parse, extract_noun_phrases
 
 ##########################################################################
 ## Qustion and Answer Models
@@ -39,6 +43,7 @@ class Question(TimeStampedModel):
     details  = models.TextField( help_text="Edit in Markdown", **nullable )       # Additional details about the question
     details_rendered = models.TextField( editable=False, **nullable )             # HTML rendered details text from MD
     parse    = models.TextField( editable=False, **nullable )                     # The syntactic parse of the question text
+    parse_time = models.FloatField( editable=False, **nullable )                  # The time it took to parse the question text
     related  = models.ManyToManyField( 'self', editable=False )                   # Links between related questions
     template = models.ForeignKey(                                                 # Question template for similarity
                 'freebase.TextTemplate',
@@ -46,7 +51,7 @@ class Question(TimeStampedModel):
                 editable=False, **nullable
                )
     author   = models.ForeignKey( 'auth.User', related_name='questions' )         # The author of the question
-    votes    = GenericRelation( Vote, related_query_name='questions' )   # Vote on whether or not the question is relevant
+    votes    = GenericRelation( Vote, related_query_name='questions' )            # Vote on whether or not the question is relevant
     topics   = models.ManyToManyField(                                            # Extracted concepts from parse
                 'freebase.Topic',
                 related_name='questions',
@@ -82,7 +87,7 @@ class Answer(TimeStampedModel):
     related  = models.ManyToManyField( 'self' )                                  # Links between related responses
     author   = models.ForeignKey( 'auth.User', related_name="answers" )          # The author of the answer
     question = models.ForeignKey( 'fugato.Question', related_name="answers" )    # The question this answer answers
-    votes    = GenericRelation( 'voting.Vote', related_query_name='answers' )    # Votes for the goodness of the answer
+    votes    = GenericRelation( Vote, related_query_name='answers' )             # Votes for the goodness of the answer
 
     class Meta:
         db_table = "answers"
@@ -103,6 +108,26 @@ def question_normalization(sender, instance, *args, **kwargs):
 def question_render_markdown(sender, instance, *args, **kwargs):
     if instance.details is not None:
         instance.details_rendered = htmlize(instance.details)
+
+@receiver(pre_save, sender=Question)
+def parse_question(sender, instance, *args, **kwargs):
+    if settings.STANFORD_PARSE_ON_SAVE:
+        start = time.time()
+
+        # Syntactic Parsing
+        trees = parse(instance.text)
+        if len(trees) > 0:
+            tree = trees[0] # Get the most likely tree
+            instance.parse = tree.pprint()
+
+            # Concepts Parsing
+            current_topics = set([annotation.text for annotation in instance.annotations.all()])
+            for concept in extract_noun_phrases(tree):
+                if concept not in current_topics:
+                    instance.annotations.create(text=concept)
+
+        instance.parse_time = time.time() - start
+
 
 @receiver(pre_save, sender=Answer)
 def answer_render_markdown(sender, instance, *args, **kwargs):

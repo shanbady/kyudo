@@ -22,6 +22,7 @@ from model_utils import Choices
 from model_utils.models import TimeStampedModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from voting.managers import VotingManager
 
 
 ##########################################################################
@@ -43,6 +44,9 @@ class Vote(TimeStampedModel):
     content_type   = models.ForeignKey( ContentType )
     object_id      = models.PositiveIntegerField()
     content_object = GenericForeignKey( 'content_type', 'object_id' )
+
+    # Set a custom manager for the Vote object
+    objects   = VotingManager()
 
     def __unicode__(self):
         action = {

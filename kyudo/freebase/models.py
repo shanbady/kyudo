@@ -56,9 +56,15 @@ class Topic(models.Model):
 class TopicAnnotation(TimeStampedModel):
 
     text     = models.CharField( max_length=255 ) # The text that's being annotated with a topic
-    topic    = models.ForeignKey( 'freebase.Topic', related_name='annotations' )
+    topic    = models.ForeignKey( 'freebase.Topic', related_name='annotations', **nullable )
     question = models.ForeignKey( 'fugato.Question', related_name='annotations' )
-    user     = models.ForeignKey( 'auth.User', related_name='annotations' )
+    user     = models.ForeignKey( 'auth.User', related_name='annotations', **nullable )
+
+    def is_ambiguous(self):
+        """
+        Decides if the annotation is ambiguous or not
+        """
+        return self.topic is None
 
     class Meta:
         db_table = "annotations"

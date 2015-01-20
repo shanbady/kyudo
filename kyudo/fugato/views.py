@@ -35,6 +35,7 @@ class QuestionDetail(DetailView):
 
     model = Question
     template_name = "app/question.html"
+    context_object_name = "question"
 
 ##########################################################################
 ## API HTTP/JSON Views

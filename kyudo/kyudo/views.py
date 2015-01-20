@@ -55,7 +55,7 @@ class WebAppView(LoginRequired, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(WebAppView, self).get_context_data(**kwargs)
-        context['question_list'] = Question.objects.all()
+        context['question_list'] = Question.objects.order_by('-modified')
         return context
 
 class DebugView(LoginRequired, TemplateView):

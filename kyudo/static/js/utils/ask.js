@@ -69,8 +69,12 @@
         });
 
         function onQuestionPostSuccess(data) {
-          console.log("Success!");
-          askQuestionModal.modal("hide");
+          if (data.page_url) {
+            window.location.href = data.page_url;
+          } else {
+            console.log("Success!");
+            askQuestionModal.modal("hide");
+          }
         }
 
         function onQuestionPostFailure(jqXHR, textStatus, errorThrown) {
