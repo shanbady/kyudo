@@ -25,11 +25,11 @@ from django.conf import settings
 from autoslug import AutoSlugField
 from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
-from django.db.models.signals import pre_save
 from django.core.urlresolvers import reverse
+from django.db.models.signals import pre_save, post_save
 from kyudo.utils import signature, nullable, htmlize
 from django.contrib.contenttypes.fields import GenericRelation
-from freebase.nlp import entities, parse, extract_noun_phrases
+from freebase.nlp import entities, parse, extract_noun_phrases, tree_from_string
 
 ##########################################################################
 ## Qustion and Answer Models
@@ -120,14 +120,21 @@ def parse_question(sender, instance, *args, **kwargs):
             tree = trees[0] # Get the most likely tree
             instance.parse = tree.pprint()
 
-            # Concepts Parsing
-            current_topics = set([annotation.text for annotation in instance.annotations.all()])
-            for concept in extract_noun_phrases(tree):
-                if concept not in current_topics:
-                    instance.annotations.create(text=concept)
-
         instance.parse_time = time.time() - start
 
+@receiver(post_save, sender=Question)
+def get_question_concepts(sender, instance, *args, **kwargs):
+    if settings.STANFORD_PARSE_ON_SAVE:
+        if not instance.parse:
+            return
+
+        tree  = tree_from_string(instance.parse)
+
+        # Concepts Parsing
+        current_topics = set([annotation.text for annotation in instance.annotations.all()])
+        for concept in extract_noun_phrases(tree):
+            if concept not in current_topics:
+                instance.annotations.create(text=concept)
 
 @receiver(pre_save, sender=Answer)
 def answer_render_markdown(sender, instance, *args, **kwargs):

@@ -175,7 +175,7 @@ EMAIL_HOST      = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'server@bengfort.com'
 EMAIL_HOST_PASSWORD  = environ_setting("EMAIL_HOST_PASSWORD")
 EMAIL_PORT      = 587
-EMAIL_SUBJECT_PREFIX = '[KYUDO]'
+EMAIL_SUBJECT_PREFIX = '[KYUDO] '
 
 ##########################################################################
 ## Authentication

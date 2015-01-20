@@ -67,6 +67,9 @@ def tag(sent):
 def parse(sent):
     return Parser.parse(sent)
 
+def tree_from_string(seq):
+    return Tree.fromstring(seq)
+
 ##########################################################################
 ## Phrase extraction
 ##########################################################################
@@ -122,3 +125,4 @@ def extract_noun_phrases(tree):
 
         if len(words) > 0:
             yield " ".join([word for word,tag in words])
+
