@@ -29,18 +29,26 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     Serializes the Question object for use in the API.
     """
 
-    author = serializers.HyperlinkedRelatedField(
+    author   = serializers.HyperlinkedRelatedField(
                 default=serializers.CurrentUserDefault(),
                 read_only=True,
                 view_name="api:user-detail",
-             )
+               )
+
+    page_url = serializers.SerializerMethodField()
 
     class Meta:
         model  = Question
-        fields = ('url', 'text', 'author', 'slug')
+        fields = ('url', 'text', 'author', 'page_url')
         extra_kwargs = {
             'url': {'view_name': 'api:question-detail',}
         }
+
+    def get_page_url(self, obj):
+        """
+        Returns the models' detail absolute url.
+        """
+        return obj.get_absolute_url()
 
     def validate(self, attrs):
        """

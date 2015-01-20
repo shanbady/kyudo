@@ -21,6 +21,8 @@ from django.shortcuts import redirect
 from users.mixins import LoginRequired, is_member
 from django.views.generic import TemplateView
 
+from fugato.models import Question
+
 ##########################################################################
 ## Application Views
 ##########################################################################
@@ -50,6 +52,11 @@ class WebAppView(LoginRequired, TemplateView):
     """
 
     template_name = "app/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(WebAppView, self).get_context_data(**kwargs)
+        context['question_list'] = Question.objects.all()
+        return context
 
 class DebugView(LoginRequired, TemplateView):
     """

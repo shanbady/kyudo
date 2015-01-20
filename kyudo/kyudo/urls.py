@@ -51,10 +51,13 @@ urlpatterns = patterns('',
 
     ## Static pages
     url(r'^$', SplashPage.as_view(), name='home'),
-    url(r'^entry/$', WebAppView.as_view(), name='app-entry'),
-    url(r'^app/$', DebugView.as_view(), name='app-root'),
     url(r'^terms/$', TemplateView.as_view(template_name='site/legal/terms.html'), name='terms'),
     url(r'^privacy/$', TemplateView.as_view(template_name='site/legal/privacy.html'), name='privacy'),
+
+    ## Application Pages
+    url(r'^debug/$', DebugView.as_view(), name='app-debug'),
+    url(r'^app/$', WebAppView.as_view(), name='app-root'),
+    url(r'^q/(?P<slug>[\w-]+)/$', QuestionDetail.as_view(), name='question'),
 
     ## Authentication
     url('', include('social.apps.django_app.urls', namespace='social')),

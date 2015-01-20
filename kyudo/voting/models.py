@@ -54,7 +54,8 @@ class Vote(TimeStampedModel):
         return u"%s %s %s" % (unicode(self.user), action, unicode(self.content_object))
 
     class Meta:
+        db_table = "voting"
         get_latest_by = "modified"
         verbose_name  = "vote"
         verbose_name_plural = "votes"
-        unique_together = ('content_object', 'user')
+        unique_together = ('object_id', 'user', 'content_type')

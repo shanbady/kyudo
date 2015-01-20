@@ -18,12 +18,13 @@ Models for the fugato app.
 ##########################################################################
 
 from django.db import models
-from markdown import markdown
+from voting.models import Vote
 from autoslug import AutoSlugField
 from django.dispatch import receiver
-from kyudo.utils import signature, nullable
 from model_utils.models import TimeStampedModel
 from django.db.models.signals import pre_save
+from django.core.urlresolvers import reverse
+from kyudo.utils import signature, nullable, htmlize
 from django.contrib.contenttypes.fields import GenericRelation
 
 ##########################################################################
@@ -45,12 +46,24 @@ class Question(TimeStampedModel):
                 editable=False, **nullable
                )
     author   = models.ForeignKey( 'auth.User', related_name='questions' )         # The author of the question
-    votes    = GenericRelation( 'voting.Vote', related_query_name='questions' )   # Vote on whether or not the question is relevant
+    votes    = GenericRelation( Vote, related_query_name='questions' )   # Vote on whether or not the question is relevant
     topics   = models.ManyToManyField(                                            # Extracted concepts from parse
                 'freebase.Topic',
                 related_name='questions',
                 through='freebase.TopicAnnotation'
                )
+
+    def get_absolute_url(self):
+        """
+        Return the detail view of the Question object
+        """
+        return reverse('question', kwargs={'slug': self.slug})
+
+    def get_api_detail_url(self):
+        """
+        Returns the API detail endpoint for the object
+        """
+        return reverse('api:question-detail', args=(self.pk,))
 
     class Meta:
         db_table = "questions"
@@ -68,7 +81,7 @@ class Answer(TimeStampedModel):
     text_rendered = models.TextField( editable=False, null=False )               # HTML rendered details of the question
     related  = models.ManyToManyField( 'self' )                                  # Links between related responses
     author   = models.ForeignKey( 'auth.User', related_name="answers" )          # The author of the answer
-    question = models.ForeignKey( 'fugato.Answer', related_name="answers" )      # The question this answer answers
+    question = models.ForeignKey( 'fugato.Question', related_name="answers" )    # The question this answer answers
     votes    = GenericRelation( 'voting.Vote', related_query_name='answers' )    # Votes for the goodness of the answer
 
     class Meta:
@@ -89,9 +102,9 @@ def question_normalization(sender, instance, *args, **kwargs):
 @receiver(pre_save, sender=Question)
 def question_render_markdown(sender, instance, *args, **kwargs):
     if instance.details is not None:
-        instance.details_rendered = markdown(instance.details)
+        instance.details_rendered = htmlize(instance.details)
 
 @receiver(pre_save, sender=Answer)
 def answer_render_markdown(sender, instance, *args, **kwargs):
     if instance.text is not None:
-        instance.text_rendered = markdown(instance.text)
+        instance.text_rendered = htmlize(instance.text)

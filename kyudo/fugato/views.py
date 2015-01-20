@@ -19,12 +19,22 @@ Views for the Fugato app
 
 from fugato.models import *
 from fugato.serializers import *
+from django.views.generic import DetailView
 from rest_framework import viewsets
 from users.permissions import IsAuthorOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route, list_route
+
+##########################################################################
+## HTTP Generated Views
+##########################################################################
+
+class QuestionDetail(DetailView):
+
+    model = Question
+    template_name = "app/question.html"
 
 ##########################################################################
 ## API HTTP/JSON Views

@@ -17,24 +17,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Answer',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
-                ('text', models.TextField(help_text=b'Edit in Markdown')),
-                ('text_rendered', models.TextField(editable=False)),
-                ('author', models.ForeignKey(related_name='answers', to=settings.AUTH_USER_MODEL)),
-                ('question', models.ForeignKey(related_name='answers', to='fugato.Answer')),
-                ('related', models.ManyToManyField(related_name='related_rel_+', to='fugato.Answer')),
-            ],
-            options={
-                'db_table': 'answers',
-                'get_latest_by': 'created',
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
             name='Question',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
@@ -53,6 +35,24 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'questions',
+                'get_latest_by': 'created',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Answer',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
+                ('text', models.TextField(help_text=b'Edit in Markdown')),
+                ('text_rendered', models.TextField(editable=False)),
+                ('author', models.ForeignKey(related_name='answers', to=settings.AUTH_USER_MODEL)),
+                ('question', models.ForeignKey(related_name='answers', to='fugato.Question')),
+                ('related', models.ManyToManyField(related_name='related_rel_+', to='fugato.Answer')),
+            ],
+            options={
+                'db_table': 'answers',
                 'get_latest_by': 'created',
             },
             bases=(models.Model,),

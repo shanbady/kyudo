@@ -107,9 +107,10 @@ INSTALLED_APPS = (
     'rest_framework',
 
     # Kyudo apps
-    'users',   # Handles Google OAuth and Profiles
-    'fugato',  # Initial query collection app
-    'freebase' # Handles the knowledge base and RDF api
+    'users',    # Handles Google OAuth and Profiles
+    'fugato',   # Initial query collection app
+    'freebase', # Handles the knowledge base and RDF api
+    'voting',   # Handles the upvoting and downvoting of objects
 )
 
 ## Request Handling
