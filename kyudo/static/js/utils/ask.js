@@ -78,7 +78,7 @@
         }
 
         function onQuestionPostFailure(jqXHR, textStatus, errorThrown) {
-          reason = jqXHR.responseJSON.non_field_errors[0];
+          reason = jqXHR.responseJSON.detail;
           askQuestionForm.addClass('has-error');
           helpBlock.text(reason);
 

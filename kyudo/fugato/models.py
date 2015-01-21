@@ -70,6 +70,40 @@ class Question(TimeStampedModel):
         """
         return reverse('api:question-detail', args=(self.pk,))
 
+    def get_text_parse(self):
+        """
+        Returns a string of the parse tree and the time it took to parse
+        """
+        start = time.time()
+
+        # Syntactic Parsing
+        trees = parse(self.text)
+        tree = trees[0].pprint() if len(trees) > 0 else None
+
+        return (tree, time.time() - start)
+
+    def get_text_concepts(self):
+        """
+        Returns a list of strings of extracted noun phrases and the time
+        it took to perform the concept extraction.
+        """
+
+        # Cannot get concepts if there is no parse
+        if not self.parse:
+            return [], 0.0
+
+        start = time.time()
+        tree  = tree_from_string(self.parse)
+
+        # Concepts Parsing
+        concepts = []
+        current  = set([annotation.text for annotation in self.annotations.all()])
+        for concept in extract_noun_phrases(tree):
+            if concept not in current:
+                concepts.append(concept)
+
+        return (concepts, time.time()-start)
+
     class Meta:
         db_table = "questions"
         get_latest_by = 'created'
@@ -106,37 +140,29 @@ def question_normalization(sender, instance, *args, **kwargs):
 
 @receiver(pre_save, sender=Question)
 def question_render_markdown(sender, instance, *args, **kwargs):
+    if instance.details == "":
+        instance.details = None
+
     if instance.details is not None:
         instance.details_rendered = htmlize(instance.details)
-
-@receiver(pre_save, sender=Question)
-def parse_question(sender, instance, *args, **kwargs):
-    if settings.STANFORD_PARSE_ON_SAVE:
-        start = time.time()
-
-        # Syntactic Parsing
-        trees = parse(instance.text)
-        if len(trees) > 0:
-            tree = trees[0] # Get the most likely tree
-            instance.parse = tree.pprint()
-
-        instance.parse_time = time.time() - start
-
-@receiver(post_save, sender=Question)
-def get_question_concepts(sender, instance, *args, **kwargs):
-    if settings.STANFORD_PARSE_ON_SAVE:
-        if not instance.parse:
-            return
-
-        tree  = tree_from_string(instance.parse)
-
-        # Concepts Parsing
-        current_topics = set([annotation.text for annotation in instance.annotations.all()])
-        for concept in extract_noun_phrases(tree):
-            if concept not in current_topics:
-                instance.annotations.create(text=concept)
+    else:
+        instance.details_rendered = None
 
 @receiver(pre_save, sender=Answer)
 def answer_render_markdown(sender, instance, *args, **kwargs):
     if instance.text is not None:
         instance.text_rendered = htmlize(instance.text)
+
+@receiver(pre_save, sender=Question)
+def parse_question(sender, instance, *args, **kwargs):
+    if settings.STANFORD_PARSE_ON_SAVE:
+        if not instance.parse:
+            instance.parse, instance.parse_time = instance.get_text_parse()
+
+@receiver(post_save, sender=Question)
+def add_question_concepts(sender, instance, *args, **kwargs):
+    if settings.STANFORD_PARSE_ON_SAVE:
+        if not instance.annotations.exists():
+            concepts, delta = instance.get_text_concepts()
+            for concept in concepts:
+                instance.annotations.create(text=concept)

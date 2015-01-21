@@ -38,7 +38,7 @@
 
         <!-- Middle Column -->
         <div class="col-md-8">
-          <h2>{{ question.text }}</h2>
+          <h2 id="questionText">{{ question.text }}</h2>
           <p class="text-muted">
             <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
           </p>
@@ -51,15 +51,45 @@
             <button class="btn btn-default btn-xs" type="button">
               <i class="fa fa-thumbs-down"></i> | {{ question.votes.downvotes.count }}
             </button>
+
+            <div class="pull-right">
+
+              {% if question.details %}
+              <p><a class="edit-details" href="#">Edit Details</a></p>
+              {% else %}
+              <p><a class="edit-details" href="#">Add Details</a></p>
+              {% endif %}
+            </div>
+            <div class="clearfix"></div>
           </div>
 
           <div class="question-details">
+            {% if question.details %}
             {{ question.details_rendered|safe }}
+            {% endif %}
+          </div>
+
+          <div class="question-details-form">
+            <form role="form" id="formQuestionDetails" class="hidden">
+              <div class="form-group">
+                <textarea id="txtQuestionDetails" class="form-control" rows="8">{% if question.details %}{{ question.details }}{% endif %}</textarea>
+                <span class="help-block pull-left">Edit Details in Markdown</span>
+              </div>
+              <div class="pull-right">
+                <button id="btnCancelEditDetails" type="button" class="btn btn-default btn-sm">Cancel</button>
+                <button id="btnSubmitEditDetails" type="submit" class="btn btn-primary btn-sm">Update</button>
+              </div>
+              <div class="clearfix"></div>
+            </form>
           </div>
 
           <hr />
           <pre>{{ question.parse }}</pre>
-          <p class="text-info">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
+          <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
+          <p class="text-muted pull-right">
+            is this parse <a href="#" class="text-success">correct</a> or <a href="#" class="text-danger">incorrect</a>?
+          </p>
+          <div class="clearfix"></div>
         </div><!-- end middle column -->
 
         <!-- Right column -->
@@ -76,4 +106,96 @@
 
       </div>
     </div>
+  {% endblock %}
+
+  {% block javascripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+      (function($) {
+        $(document).ready(function() {
+
+          // Configure the question application
+          var csrfToken   = $('input[name="csrfmiddlewaretoken"]').val();
+          $.ajaxSetup({headers: {"X-CSRFToken": csrfToken}});
+          console.log("question application ready")
+
+          var endpoint             = "{{ question.get_api_detail_url }}";
+          var questionText         = $("#questionText").text();
+          var questionDetails      = $("div.question-details");
+          var detailsForm          = $("form#formQuestionDetails");
+          var txtQuestionDetails   = $("#txtQuestionDetails");
+          var btnEditDetails       = $(".edit-details");
+          var btnCancelEditDetails = $("#btnCancelEditDetails");
+          var btnSubmitEditDetails = $("#btnSubmitEditDetails");
+
+          // Handle edit details link press (start editing)
+          btnEditDetails.click(function(e) {
+            e.preventDefault();
+            questionDetails.addClass("hidden").removeClass("show");
+            detailsForm.addClass("show").removeClass("hidden");
+            $(".edit-details").addClass("hidden").removeClass("show");
+            return false;
+          });
+
+          // Handle the cancel edit button press (stop editing)
+          btnCancelEditDetails.click(function(e) {
+            questionDetails.addClass("show").removeClass("hidden");
+            detailsForm.addClass("hidden").removeClass("show");
+            $(".edit-details").addClass("show").removeClass("hidden");
+
+            // Reload the text input with the data
+            $.getJSON(endpoint, function(data) {
+              txtQuestionDetails.val(data.details);
+            });
+
+            return false;
+          });
+
+          // Handle the submission of the details form (PUT changes)
+          detailsForm.submit(function(e) {
+            e.preventDefault();
+
+            // Get the data from the text input and validate
+            var details = txtQuestionDetails.val();
+            if (!details) {
+              console.log("Nothing to submit");
+              return
+            }
+
+            // Disable the details form
+            detailsForm.find("textarea, button").attr('disabled', 'disabled');
+
+            // Put the data to the server
+            $.ajax({
+              url: endpoint,
+              type: 'PUT',
+              data: {
+                'text': questionText,
+                'details': details
+              },
+              success: function(data) {
+                // Set the details and the details_rendered
+                txtQuestionDetails.val(data.details);
+                questionDetails.html(data.details_rendered);
+
+                $(".edit-details").text("Edit Details");
+                $(".edit-details").addClass("show").removeClass("hidden");
+
+                // Swap and show the new area
+                detailsForm.find("textarea, button").removeAttr("disabled");
+                questionDetails.addClass("show").removeClass("hidden");
+                detailsForm.addClass("hidden").removeClass("show");
+              }
+            });
+
+
+            return false;
+          });
+
+
+
+
+        });
+      })(jQuery);
+    </script>
   {% endblock %}

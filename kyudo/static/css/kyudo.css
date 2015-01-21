@@ -72,14 +72,15 @@ img.navbar-gravatar {
 
 /* Editable items */
 
-.editable-item:hover a:after{
+.editable-item:hover a.edit-link:after{
   content: "edit";
 }
 
-.editable-item a {
+.editable-item a.edit-link {
   font-size: small;
   margin-left 6px;
 }
+
 
 /* Number stats inline */
 
@@ -116,4 +117,8 @@ img.navbar-gravatar {
     font-size: 0.7em;
     color: #999;
     margin: 0;
+}
+
+.question-details {
+  min-height: 30px;
 }

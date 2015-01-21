@@ -18,6 +18,7 @@ JSON Serializers for the Fugato app
 ##########################################################################
 
 from fugato.models import *
+from fugato.exceptions import *
 from rest_framework import serializers
 
 ##########################################################################
@@ -39,10 +40,15 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model  = Question
-        fields = ('url', 'text', 'author', 'page_url')
+        fields = ('url', 'text', 'author', 'page_url', 'details', 'details_rendered')
         extra_kwargs = {
-            'url': {'view_name': 'api:question-detail',}
+            'url': {'view_name': 'api:question-detail',},
+            'details_rendered': {'read_only': True},
         }
+
+    ######################################################################
+    ## Serializer Methods
+    ######################################################################
 
     def get_page_url(self, obj):
         """
@@ -50,13 +56,39 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
         """
         return obj.get_absolute_url()
 
-    def validate(self, attrs):
-       """
-       Check that the question hasn't already been asked.
-       """
-       if Question.objects.filter(hash=signature(attrs['text'])).exists():
-            raise serializers.ValidationError("question has already been asked")
-       return attrs
+    #####################################################################
+    ## Override create and update for API
+    ######################################################################
+
+    def create(self, validated_data):
+        """
+        Override the create method to deal with duplicate questions and
+        other API-specific errors that can happen on Question creation.
+        """
+
+        ## Check to make sure there is no duplicate
+        hash = signature(validated_data['text'])
+        if Question.objects.filter(hash=hash).exists():
+            raise DuplicateQuestion()
+
+        ## Create the model as before
+        return super(QuestionSerializer, self).create(validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Override the update method to perform non-duplication checks that
+        aren't instance-specific and to determine if other fields should
+        be updated like the parse or the concepts.
+
+        Currently this is simply the default behavior.
+
+        TODO:
+            - Check if reparsing needs to be performed
+            - Check if concepts need to be dealt with
+            - Check if the question text has changed and what to do
+        """
+        return super(QuestionSerializer, self).update(instance, validated_data)
+
 
 class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     """
