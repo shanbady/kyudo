@@ -1,0 +1,7 @@
+#4f5151 default
+#808080 muted
+#d9230f primary
+#469408 success
+#9b479f warning
+#d9831f danger
+#029acf info
