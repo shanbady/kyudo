@@ -43,6 +43,8 @@ In order to run the server locally, follow these steps:
 - [Sempre](https://github.com/percyliang/sempre)
 - DEANNA
 
+A note on Syntactic parsing, this project is an academic project and uses the [Stanford Parser](http://nlp.stanford.edu/software/lex-parser.shtml) and the [Stanford NER tagger](http://nlp.stanford.edu/software/CRF-NER.shtml). The Stanford Parser uses the Penn Treebank tags for its syntactic parsing, which is documented briefly here: [Penn Treebank II Tags](https://gist.github.com/bbengfort/aa6b785aed3d673fce2c). 
+
 ## About
 
 Kyudo is a knowledge goal casebase management and annotation tool, designed to create a corpus with which to explore Casebased Reasoning and automatic Knowledge Goal solutions in an artificial intelligence setting. To that end, it is set up similarly to a Q&A application like [StackExchange](http://stackexchange.com/) or [Quora](https://www.quora.com/) - but goes further allowing users to annotate topics from [Freebase](http://www.freebase.com/) as well as statistical parses. 
