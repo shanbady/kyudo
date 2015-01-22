@@ -17,8 +17,16 @@ Tests for the Kyudo library
 ## Imports
 ##########################################################################
 
+import kyudo
+
 from unittest import TestCase
 # from django.test import TestCase
+
+##########################################################################
+## Module variables
+##########################################################################
+
+EXPECTED_VERSION = "1.0.2"
 
 ##########################################################################
 ## Initialization Tests
@@ -34,3 +42,9 @@ class InitializationTests(TestCase):
         Check that the world is sane and 2+2=4
         """
         self.assertEqual(2+2, 4)
+
+    def test_version(self):
+        """
+        Assert that test and package versions match
+        """
+        self.assertEqual(EXPECTED_VERSION, kyudo.get_version())
