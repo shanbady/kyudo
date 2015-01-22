@@ -1,9 +1,13 @@
-[![Stories in Ready](https://badge.waffle.io/mclumd/kyudo.png?label=ready&title=Ready)](https://waffle.io/mclumd/kyudo)
-Kyudo
-=====
+
+
+# Kyudo 
 **A research framework for goal driven query interfaces.**
 
-## How to Run ##
+[![Build Status][travis_img]][travis_href] [![Stories in Ready][waffle_img]][waffle_href]
+
+[![Kyudo Targets](docs/img/targets.jpg)][targets.jpg]
+
+## How to Run
 
 In order to run the server locally, follow these steps:
 
@@ -26,13 +30,43 @@ In order to run the server locally, follow these steps:
 
         $ python kyudo/manage.py migrate
 
-6. Run the server:
+6. Install the Stanford Parser and the Stanford NER tagger (requires Java 1.8). Add the paths to the jars and models in the `kyudo/kyudo/settings/development.py` file (at the end). 
+
+7. Run the server:
 
         $ make runserver
 
-7. You should now be able to open a browser at http://127.0.0.1:8000
+8. You should now be able to open a browser at http://127.0.0.1:8000
 
-## Possible Parsers ##
+## Possible Parsers
 
 - [Sempre](https://github.com/percyliang/sempre)
 - DEANNA
+
+## About
+
+Kyudo is a knowledge goal casebase management and annotation tool, designed to create a corpus with which to explore Casebased Reasoning and automatic Knowledge Goal solutions in an artificial intelligence setting. To that end, it is set up similarly to a Q&A application like [StackExchange](http://stackexchange.com/) or [Quora](https://www.quora.com/) - but goes further allowing users to annotate topics from [Freebase](http://www.freebase.com/) as well as statistical parses. 
+
+### Contributing
+
+Kyudo is open source, but because this is an academic project, we would appreciate it if you would let us know how you intend to use the software (other than simply copying and pasting code so that you can use it in your own projects). If you would like to contribute (and are not a student at either the University of Maryland or Wright State Research Institute), you can do so in the following ways:
+
+1. Create a pull request in Github: [https://github.com/mclumd/kyudo](https://github.com/mclumd/kyudo)
+2. Add issues or bugs to the bug tracker: [https://github.com/mclumd/kyudo/issues](https://github.com/mclumd/kyudo/issues)
+3. Work on a card on the dev board: [https://waffle.io/mclumd/kyudo](https://waffle.io/mclumd/kyudo)
+
+### Name Origin
+
+[Kyūdō](http://en.wikipedia.org/wiki/Ky%C5%ABd%C5%8D), the way of the bow, is a Japanese martial art of archery. We started in the Japanese naming scheme because of an external project code named SAMURAI. Since then our applications (Ronin, Kyudo) have followed a Japanese martial naming convention. Kyudo seems particularly important as we have the idea of goal trajectories to solve knowledge goals; much like the flight of an arrow to  hit a target. 
+
+### Attribution
+
+The image used in this README, [Kyudo Exam 05][targets.jpg] by [Noomai](https://www.flickr.com/photos/noomai/) is licensed under [CC BY-NC-SA 2.0](https://creativecommons.org/licenses/by-nc-sa/2.0/)
+
+
+<!-- References -->
+[travis_img]: https://travis-ci.org/mclumd/kyudo.svg
+[travis_href]: https://travis-ci.org/mclumd/kyudo
+[waffle_img]: https://badge.waffle.io/mclumd/kyudo.png?label=ready&title=Ready
+[waffle_href]: https://waffle.io/mclumd/kyudo
+[targets.jpg]: https://flic.kr/p/4ucxLG

@@ -23,7 +23,7 @@ DJANGO_TEST_SETTINGS_MODULE = $(PROJECT).settings.$(TEST_SETTINGS)
 DJANGO_TEST_POSTFIX := --settings=$(DJANGO_TEST_SETTINGS_MODULE) --pythonpath=$(PYTHONPATH)
 
 # Apps to test
-APPS := scribe
+APPS := freebase fugato users voting
 
 # Export targets not associated with files
 .PHONY: test showenv coverage bootstrap pip virtualenv clean virtual_env_set
@@ -55,8 +55,8 @@ clean:
 	-rm -rf .coverage
 	-rm -rf build
 	-rm -rf dist
-	-rm -rf memorandi/*.egg-info
+	-rm -rf $(PROJECT)/*.egg-info
 
 # Targets for Django testing
 test:
-	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(PYTHON_BIN)/django-admin.py test $(APPS) $(DJANGO_LOCAL_POSTFIX)
+	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(PYTHON_BIN)/django-admin.py test $(APPS) --pythonpath=$(PYTHONPATH)
