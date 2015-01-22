@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/mclumd/kyudo.png?label=ready&title=Ready)](https://waffle.io/mclumd/kyudo)
 Kyudo
 =====
 **A research framework for goal driven query interfaces.**
