@@ -131,6 +131,23 @@ class Answer(TimeStampedModel):
         return self.text
 
 ##########################################################################
+## Parse annotation model
+##########################################################################
+
+class ParseAnnotation(TimeStampedModel):
+    """
+    Helper model/table so that users can annotate if parses are correct
+    """
+
+    question = models.OneToOneField( 'fugato.Question' )                        # The question being annotated
+    user     = models.ForeignKey( 'auth.User', related_name='+' )               # The user doing the annotation
+    correct  = models.NullBooleanField( )                                       # Whether or not the parse is correct
+
+    class Meta:
+        db_table = "parse_annotations"
+        get_latest_by = "created"
+
+##########################################################################
 ## Signals
 ##########################################################################
 
