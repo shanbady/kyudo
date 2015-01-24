@@ -74,3 +74,6 @@ STANFORD_NER_JAR   = "/usr/share/stanford/ner/stanford-ner-2014-01-04.jar"
 ## Parser JAR and Models
 STANFORD_PARSER_MODELS = "/usr/share/stanford/parser/stanford-parser-3.5.0-models.jar"
 STANFORD_PARSER_JAR    = "/usr/share/stanford/parser/stanford-parser.jar"
+
+## Stanford NLP not yet configured
+STANFORD_PARSE_ON_SAVE = False

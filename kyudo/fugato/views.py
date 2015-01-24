@@ -45,12 +45,24 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
     queryset = Question.objects.order_by('-created')
     serializer_class   = QuestionSerializer
-    permission_classes = [IsAuthorOrReadOnly]
 
-    def pre_save(self, obj):
-        if not hasattr(obj, 'author') or not obj.author:
-            obj.author = self.request.user
-        super(QuestionViewSet, self).pre_save(obj)
+    @detail_route(methods=['get', 'post'], permission_classes=[IsAuthenticated])
+    def parse(self, request, pk=None):
+        question = self.get_object()
+
+        if request.method == 'GET':
+            serializer = ParseAnnotationSerializer(question.parse_annotation, context={'request': request})
+            return Response(serializer.data)
+
+        else:
+            serializer = ParseAnnotationSerializer(data=request.DATA, context={'request': request})
+            if serializer.is_valid():
+                # Set the annotator and correctness on the annotation
+                question.parse_annotation.user = serializer.validated_data['user']
+                question.parse_annotation.correct = serializer.validated_data['correct']
+                question.parse_annotation.save()
+
+                return Response({'success': True})
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
