@@ -103,6 +103,26 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
             'url': {'view_name': 'api:answer-detail',}
         }
 
+class ParseAnnotationSerializer(serializers.ModelSerializer):
+    """
+    Serializes the ParseAnnotation object for use in the API.
+    """
+
+    question = serializers.StringRelatedField(read_only=True)
+    user     = serializers.HyperlinkedRelatedField(
+                default=serializers.CurrentUserDefault(),
+                read_only=True,
+                view_name="api:user-detail",
+               )
+    parse    = serializers.SerializerMethodField()
+
+    def get_parse(self, obj):
+        return obj.question.parse
+
+    class Meta:
+        model  = ParseAnnotation
+        fields = ('question', 'parse', 'user', 'correct',)
+
 class VotingSerializer(serializers.Serializer):
     """
     Serializes incoming votes.
