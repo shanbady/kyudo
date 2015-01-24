@@ -62,7 +62,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 question.parse_annotation.correct = serializer.validated_data['correct']
                 question.parse_annotation.save()
 
-                return Response({'success': True})
+                data = ParseAnnotationSerializer(question.parse_annotation, context={'request': request}).data
+                data.update({'success': True})
+                return Response(data)
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):

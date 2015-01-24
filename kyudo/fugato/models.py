@@ -146,6 +146,12 @@ class ParseAnnotation(TimeStampedModel):
     user     = models.ForeignKey( 'auth.User', related_name='+', **nullable )   # The user doing the annotation
     correct  = models.NullBooleanField( )                                       # Whether or not the parse is correct
 
+    def is_annotated(self):
+        """
+        Determines if the annotation has been marked
+        """
+        return self.correct is not None
+
     class Meta:
         db_table = "parse_annotations"
         get_latest_by = "created"

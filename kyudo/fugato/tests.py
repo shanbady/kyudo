@@ -228,7 +228,7 @@ class QuestionAPIViewSetTest(TestCase):
 
         response = self.client.post(endpoint, {'correct': True}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {'success': True})
+        self.assertDictContainsSubset({'success': True}, response.data)
 
         result   = self.client.get(endpoint)
         self.assertIn('correct', result.data)
@@ -237,7 +237,7 @@ class QuestionAPIViewSetTest(TestCase):
 
         response = self.client.post(endpoint, {'correct': False}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {'success': True})
+        self.assertDictContainsSubset({'success': True}, response.data)
 
         result   = self.client.get(endpoint)
         self.assertIn('correct', result.data)
