@@ -19,6 +19,7 @@ Tests the fugato app
 
 from unittest import skip
 from fugato.models import *
+from voting.models import *
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from rest_framework import status
@@ -35,6 +36,13 @@ fixtures = {
         'last_name': 'Doe',
         'email': 'jdoe@example.com',
         'password': 'supersecret',
+    },
+    'voter' : {
+        'username': 'bobbyd',
+        'first_name': 'Bob',
+        'last_name': 'Dylan',
+        'email': 'bobby@example.com',
+        'password': 'dontguessthis',
     },
     'question': {
         'text': 'Why did the chicken cross the road?',
@@ -123,19 +131,50 @@ class QuestionAPIViewSetTest(TestCase):
         response = self.client.delete(endpoint)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @skip("pending implementation")
     def test_question_parse_detail_auth(self):
         """
         Assert GET /api/question/:id/parse returns 403 when not logged in
         """
-        pass
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "parse/"
 
-    @skip("pending implementation")
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_question_parse_update_auth(self):
         """
-        Assert PUT /api/question/:id/parse returns 403 when not logged in
+        Assert POST /api/question/:id/parse returns 403 when not logged in
         """
-        pass
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "parse/"
+
+        response = self.client.post(endpoint, {'correct': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_question_vote_post_auth(self):
+        """
+        Assert POST /api/question/:id/vote returns 403 when not logged in
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_question_vote_get_auth(self):
+        """
+        Assert GET /api/question/:id/vote returns a 400
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.login()
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @skip("pending implementation")
     def test_question_list(self):
@@ -243,3 +282,65 @@ class QuestionAPIViewSetTest(TestCase):
         self.assertIn('correct', result.data)
         self.assertFalse(result.data['correct'])
         self.assertFalse(Question.objects.get(pk=question.pk).parse_annotation.correct)
+
+    def test_question_create_vote(self):
+        """
+        Assert POST /api/question/:id/vote creates a vote for a user
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 0)
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = {'created': True, 'status': 'vote recorded', 'display': 'upvote'}
+        self.assertDictContainsSubset(expected, response.data)
+
+        self.assertEqual(question.votes.count(), 1)
+
+    def test_question_update_vote(self):
+        """
+        Assert POST /api/question/:id/vote updates if already voted
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        vote, _  = Vote.objects.punch_ballot(content=question, user=self.user, vote=1)
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 1)
+
+        response = self.client.post(endpoint, {'vote': -1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = {'created': False, 'status': 'vote recorded', 'display': 'downvote'}
+        self.assertDictContainsSubset(expected, response.data)
+
+        self.assertEqual(question.votes.count(), 1)
+
+    def test_question_vote_response(self):
+        """
+        Ensure POST /api/question/:id/vote response contains expected data
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 0)
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        expected = {
+            'created': True,
+            'status': 'vote recorded',
+            'display': 'upvote',
+            'upvotes': 1,                   # Required for Question FE app (resets button counts)
+            'downvotes': 0,                 # Required for Question FE app (resets button counts)
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for key, val in expected.items():
+            self.assertIn(key, response.data)
+            self.assertEqual(val, response.data[key])

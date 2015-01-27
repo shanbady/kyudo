@@ -1,5 +1,6 @@
 {% extends 'page.html' %}
 {% load staticfiles %}
+{% load votable %}
 {# Displays all the information about a particular question #}
 
   {% block stylesheets %}
@@ -44,12 +45,18 @@
           </p>
 
           <div class="question-actions">
-            <button class="btn btn-default btn-xs" type="button">
-              <i class="fa fa-thumbs-up"></i> | {{ question.votes.upvotes.count }}
+            {% current_user_vote question as voted %}
+
+            <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                    type="button" data-vote="1">
+              <i class="fa fa-thumbs-up"></i> |
+              <span class="vote-count">{{ question.votes.upvotes.count }}</span>
             </button>
 
-            <button class="btn btn-default btn-xs" type="button">
-              <i class="fa fa-thumbs-down"></i> | {{ question.votes.downvotes.count }}
+            <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                    type="button" data-vote="-1">
+              <i class="fa fa-thumbs-down"></i> |
+              <span class="vote-count">{{ question.votes.downvotes.count }}</span>
             </button>
 
             <div class="pull-right">
@@ -231,7 +238,7 @@
             e.preventDefault();
 
             var parse_endpoint = endpoint + "parse/";
-            var data = $(e.target).data();
+            var data = $(this).data();
 
             $.post(parse_endpoint, data, function(data) {
 
@@ -260,6 +267,46 @@
             $(".parse-annotate-link").click(onParseAnnotateClick);
             return false
           }
+
+          // Handle the question voting buttons
+          $(".question-actions button.btn-vote").click(function(e) {
+            e.preventDefault();
+
+            var target = $(this);
+            var vote_endpoint = endpoint + "vote/";
+            var data = target.data();
+
+            $.post(vote_endpoint, data, function(result) {
+
+              // Update the buttons according to the response
+              $.each($(".question-actions button.btn-vote"), function(idx, obj) {
+                obj  = $(obj);
+                data = obj.data();
+
+                // Handle the indication class
+                if (data.vote == result.vote) {
+                  obj.addClass("btn-warning");
+                } else {
+                  obj.removeClass("btn-warning");
+                }
+
+                // Handle the count inside of the span
+                var span = obj.find("span.vote-count");
+                if (data.vote == 1) {
+                  span.text(result.upvotes);
+                } else if (data.vote == -1) {
+                  span.text(result.downvotes);
+                } else {
+                  span.text("0");
+                }
+
+              });
+
+            });
+
+            return false;
+
+          })
 
 
         });

@@ -22,7 +22,7 @@ from fugato.exceptions import *
 from rest_framework import serializers
 
 ##########################################################################
-## Serializers
+## Question Serializers
 ##########################################################################
 
 class QuestionSerializer(serializers.HyperlinkedModelSerializer):
@@ -89,20 +89,6 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
         """
         return super(QuestionSerializer, self).update(instance, validated_data)
 
-
-class AnswerSerializer(serializers.HyperlinkedModelSerializer):
-    """
-    Serializes the Answer object for use in the API.
-    """
-
-    class Meta:
-        model  = Answer
-        fields = ('url', 'text', 'author', 'question', 'created', 'modified')
-        read_only_fields = ('author',)
-        extra_kwargs = {
-            'url': {'view_name': 'api:answer-detail',}
-        }
-
 class ParseAnnotationSerializer(serializers.ModelSerializer):
     """
     Serializes the ParseAnnotation object for use in the API.
@@ -123,25 +109,19 @@ class ParseAnnotationSerializer(serializers.ModelSerializer):
         model  = ParseAnnotation
         fields = ('question', 'parse', 'user', 'correct',)
 
-class VotingSerializer(serializers.Serializer):
+##########################################################################
+## Answer Serializers
+##########################################################################
+
+class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     """
-    Serializes incoming votes.
+    Serializes the Answer object for use in the API.
     """
 
-    vote    = serializers.IntegerField()
-    display = serializers.SerializerMethodField('get_vote_display')
-
-    def validate_vote(self, attrs, source):
-        value = attrs[source]
-        if value > 1 or value < -1:
-            raise serializers.ValidationError("vote must be between -1 and 1")
-        return attrs
-
-    def get_vote_display(self, obj):
-        displays = {
-            -1: "downvote",
-             0: "novote",
-             1: "upvote",
+    class Meta:
+        model  = Answer
+        fields = ('url', 'text', 'author', 'question', 'created', 'modified')
+        read_only_fields = ('author',)
+        extra_kwargs = {
+            'url': {'view_name': 'api:answer-detail',}
         }
-
-        return displays[obj['vote']]
