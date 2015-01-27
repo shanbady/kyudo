@@ -70,6 +70,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
+        """
+        Note that the upvotes and downvotes keys are required by the front-end
+        """
         question   = self.get_object()
         serializer = VotingSerializer(data=request.DATA, context={'request': request})
         if serializer.is_valid():
@@ -82,7 +85,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
             _, created = Vote.objects.punch_ballot(**kwargs)
             response = serializer.data
-            response.update({'status': 'vote recorded', 'created': created})
+            response.update({'status': 'vote recorded', 'created': created,
+                             'upvotes': question.votes.upvotes().count(),
+                             'downvotes': question.votes.downvotes().count()})
             return Response(response)
         else:
             return Response(serializer.errors,

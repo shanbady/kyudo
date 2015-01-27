@@ -319,3 +319,28 @@ class QuestionAPIViewSetTest(TestCase):
         self.assertDictContainsSubset(expected, response.data)
 
         self.assertEqual(question.votes.count(), 1)
+
+    def test_question_vote_response(self):
+        """
+        Ensure POST /api/question/:id/vote response contains expected data
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 0)
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        expected = {
+            'created': True,
+            'status': 'vote recorded',
+            'display': 'upvote',
+            'upvotes': 1,                   # Required for Question FE app (resets button counts)
+            'downvotes': 0,                 # Required for Question FE app (resets button counts)
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for key, val in expected.items():
+            self.assertIn(key, response.data)
+            self.assertEqual(val, response.data[key])
