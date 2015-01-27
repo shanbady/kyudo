@@ -18,7 +18,9 @@ Views for the Fugato app
 ##########################################################################
 
 from fugato.models import *
+from voting.models import Vote
 from fugato.serializers import *
+from voting.serializers import *
 from django.views.generic import DetailView
 from rest_framework import viewsets
 from users.permissions import IsAuthorOrReadOnly
@@ -73,14 +75,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
 
             kwargs = {
-                'question': question,
+                'content': question,
                 'user': request.user,
-                'defaults': {
-                    'vote': serializer.data['vote'],
-                }
+                'vote': serializer.validated_data['vote'],
             }
 
-            _, created = QuestionVote.objects.update_or_create(**kwargs)
+            _, created = Vote.objects.punch_ballot(**kwargs)
             response = serializer.data
             response.update({'status': 'vote recorded', 'created': created})
             return Response(response)
