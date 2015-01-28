@@ -16,8 +16,14 @@
       <div id="profile-sidebar" class="col-sm-3">
 
         <!-- Profile title box with picture -->
-        <img class="img-responsive img-rounded" src="{{ user.profile.gravatar }}"
+        <div class="gravatar">
+          <img class="img-responsive img-rounded" src="{{ user.profile.gravatar }}"
              alt="Gravatar" title="{{ user.full_name }}" />
+            <div class="mask">
+              <a href="http://en.gravatar.com/emails/" rel="nofollow" title="Change Gravatar">Edit on Gravatar</a>
+            </div>
+        </div>
+
         <h2>{{ user.profile.full_name }}</h2>
         <h3 class="text-muted">{{ user.username }}</h3>
 
