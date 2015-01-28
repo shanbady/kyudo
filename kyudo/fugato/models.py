@@ -131,7 +131,33 @@ class Answer(TimeStampedModel):
         return self.text
 
 ##########################################################################
-## Signals
+## Parse annotation model
+##########################################################################
+
+class ParseAnnotation(TimeStampedModel):
+    """
+    Helper model/table so that users can annotate if parses are correct
+    """
+
+    question = models.OneToOneField(                                            # The question being annotated
+                'fugato.Question',
+                related_name="parse_annotation"
+               )
+    user     = models.ForeignKey( 'auth.User', related_name='+', **nullable )   # The user doing the annotation
+    correct  = models.NullBooleanField( )                                       # Whether or not the parse is correct
+
+    def is_annotated(self):
+        """
+        Determines if the annotation has been marked
+        """
+        return self.correct is not None
+
+    class Meta:
+        db_table = "parse_annotations"
+        get_latest_by = "created"
+
+##########################################################################
+## Question Signals
 ##########################################################################
 
 @receiver(pre_save, sender=Question)
@@ -148,11 +174,6 @@ def question_render_markdown(sender, instance, *args, **kwargs):
     else:
         instance.details_rendered = None
 
-@receiver(pre_save, sender=Answer)
-def answer_render_markdown(sender, instance, *args, **kwargs):
-    if instance.text is not None:
-        instance.text_rendered = htmlize(instance.text)
-
 @receiver(pre_save, sender=Question)
 def parse_question(sender, instance, *args, **kwargs):
     if settings.STANFORD_PARSE_ON_SAVE:
@@ -166,3 +187,17 @@ def add_question_concepts(sender, instance, *args, **kwargs):
             concepts, delta = instance.get_text_concepts()
             for concept in concepts:
                 instance.annotations.create(text=concept)
+
+@receiver(post_save, sender=Question)
+def create_post_annotation(sender, instance, created, **kwargs):
+    if created:
+        ParseAnnotation.objects.create(question=instance, user=None, correct=None)
+
+##########################################################################
+## Answer Signals
+##########################################################################
+
+@receiver(pre_save, sender=Answer)
+def answer_render_markdown(sender, instance, *args, **kwargs):
+    if instance.text is not None:
+        instance.text_rendered = htmlize(instance.text)

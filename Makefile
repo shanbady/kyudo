@@ -59,4 +59,5 @@ clean:
 
 # Targets for Django testing
 test:
-	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(PYTHON_BIN)/django-admin.py test $(APPS) --pythonpath=$(PYTHONPATH)
+	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(LOCALPATH)/manage.py test $(LOCALPATH) $(DJANGO_TEST_POSTFIX)
+	- $(PYTHON_BIN)/coverage report

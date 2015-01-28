@@ -39,6 +39,7 @@ router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
 router.register(r'freebase', FreebaseViewSet, "Freebase")
 router.register(r'parse', ParserViewSet, "Parse")
+router.register(r'status', HeartbeatViewSet, "Status")
 
 ##########################################################################
 ## URL Patterns for the app

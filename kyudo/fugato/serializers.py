@@ -22,7 +22,7 @@ from fugato.exceptions import *
 from rest_framework import serializers
 
 ##########################################################################
-## Serializers
+## Question Serializers
 ##########################################################################
 
 class QuestionSerializer(serializers.HyperlinkedModelSerializer):
@@ -89,6 +89,29 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
         """
         return super(QuestionSerializer, self).update(instance, validated_data)
 
+class ParseAnnotationSerializer(serializers.ModelSerializer):
+    """
+    Serializes the ParseAnnotation object for use in the API.
+    """
+
+    question = serializers.StringRelatedField(read_only=True)
+    user     = serializers.HyperlinkedRelatedField(
+                default=serializers.CurrentUserDefault(),
+                read_only=True,
+                view_name="api:user-detail",
+               )
+    parse    = serializers.SerializerMethodField()
+
+    def get_parse(self, obj):
+        return obj.question.parse
+
+    class Meta:
+        model  = ParseAnnotation
+        fields = ('question', 'parse', 'user', 'correct',)
+
+##########################################################################
+## Answer Serializers
+##########################################################################
 
 class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     """
@@ -102,26 +125,3 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = {
             'url': {'view_name': 'api:answer-detail',}
         }
-
-class VotingSerializer(serializers.Serializer):
-    """
-    Serializes incoming votes.
-    """
-
-    vote    = serializers.IntegerField()
-    display = serializers.SerializerMethodField('get_vote_display')
-
-    def validate_vote(self, attrs, source):
-        value = attrs[source]
-        if value > 1 or value < -1:
-            raise serializers.ValidationError("vote must be between -1 and 1")
-        return attrs
-
-    def get_vote_display(self, obj):
-        displays = {
-            -1: "downvote",
-             0: "novote",
-             1: "upvote",
-        }
-
-        return displays[obj['vote']]

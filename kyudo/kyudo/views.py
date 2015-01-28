@@ -17,11 +17,17 @@ Views for the project and application that don't require models
 ## Imports
 ##########################################################################
 
+import kyudo
+
+from datetime import datetime
 from django.shortcuts import redirect
 from users.mixins import LoginRequired, is_member
 from django.views.generic import TemplateView
 
-from fugato.models import Question
+from rest_framework import viewsets
+from rest_framework.response import Response
+
+from fugato.models import Question ## TODO: remove this
 
 ##########################################################################
 ## Application Views
@@ -64,3 +70,19 @@ class DebugView(LoginRequired, TemplateView):
     """
 
     template_name = "app/debug.html"
+
+##########################################################################
+## API Views for this application
+##########################################################################
+
+class HeartbeatViewSet(viewsets.ViewSet):
+    """
+    Endpoint for heartbeat checking, including the status and version.
+    """
+
+    def list(self, request):
+        return Response({
+            "status": "ok",
+            "version": kyudo.get_version(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        })

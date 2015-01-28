@@ -1,5 +1,6 @@
 {% extends 'page.html' %}
 {% load staticfiles %}
+{% load votable %}
 {# Displays all the information about a particular question #}
 
   {% block stylesheets %}
@@ -44,20 +45,27 @@
           </p>
 
           <div class="question-actions">
-            <button class="btn btn-default btn-xs" type="button">
-              <i class="fa fa-thumbs-up"></i> | {{ question.votes.upvotes.count }}
+            {% current_user_vote question as voted %}
+
+            <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                    type="button" data-vote="1">
+              <i class="fa fa-thumbs-up"></i> |
+              <span class="vote-count">{{ question.votes.upvotes.count }}</span>
             </button>
 
-            <button class="btn btn-default btn-xs" type="button">
-              <i class="fa fa-thumbs-down"></i> | {{ question.votes.downvotes.count }}
+            <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                    type="button" data-vote="-1">
+              <i class="fa fa-thumbs-down"></i> |
+              <span class="vote-count">{{ question.votes.downvotes.count }}</span>
             </button>
 
             <div class="pull-right">
-
+              {% if question.author == request.user %}
               {% if question.details %}
               <p><a class="edit-details" href="#">Edit Details</a></p>
               {% else %}
               <p><a class="edit-details" href="#">Add Details</a></p>
+              {% endif %}
               {% endif %}
             </div>
             <div class="clearfix"></div>
@@ -86,8 +94,20 @@
           <hr />
           <pre>{{ question.parse }}</pre>
           <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
-          <p class="text-muted pull-right">
-            is this parse <a href="#" class="text-success">correct</a> or <a href="#" class="text-danger">incorrect</a>?
+          <p id="parse-annotation" class="text-muted pull-right editable-item">
+            {% if question.parse_annotation.is_annotated %}
+              {% if question.parse_annotation.correct %}
+              marked <span class="text-success">correct</span> by {{ question.parse_annotation.user.username }}
+              {% else %}
+              marked <span class="text-danger">incorrect</span> by {{ question.parse_annotation.user.username }}
+              {% endif %}
+              <a href="#" class="edit-link"></a>
+            {% else %}
+            is this parse
+            <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
+            or
+            <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
+            {% endif %}
           </p>
           <div class="clearfix"></div>
         </div><!-- end middle column -->
@@ -110,6 +130,23 @@
 
   {% block javascripts %}
     {{ block.super }}
+
+    <script type="text/template" class="template" id="parseAnnotationTemplate">
+      <% if (correct) { %>
+        marked <span class="text-success">correct</span> by <%- username %>
+      <% } else { %>
+        marked <span class="text-danger">incorrect</span> by <%- username %>
+      <% } %>
+        <a href="#" class="edit-link"></a>
+    </script>
+
+    <script type="text/template" class="template" id="editParseAnnotationTemplate">
+      is this parse
+      <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
+      or
+      <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
+    </script>
+
     <script type="text/javascript">
       (function($) {
         $(document).ready(function() {
@@ -127,6 +164,8 @@
           var btnEditDetails       = $(".edit-details");
           var btnCancelEditDetails = $("#btnCancelEditDetails");
           var btnSubmitEditDetails = $("#btnSubmitEditDetails");
+          var parseAnnotationTmpl  = _.template($("#parseAnnotationTemplate").html());
+          var editParseAnnotatTmpl = _.template($("#editParseAnnotationTemplate").html());
 
           // Handle edit details link press (start editing)
           btnEditDetails.click(function(e) {
@@ -192,7 +231,82 @@
             return false;
           });
 
+          // Handle parse annotation links
+          $(".parse-annotate-link").click(onParseAnnotateClick);
 
+          function onParseAnnotateClick(e) {
+            e.preventDefault();
+
+            var parse_endpoint = endpoint + "parse/";
+            var data = $(this).data();
+
+            $.post(parse_endpoint, data, function(data) {
+
+              if (data.success) {
+                $("#parse-annotation").html(
+                  parseAnnotationTmpl({
+                    correct: data.correct,
+                    username: "{{ request.user.username }}"
+                  })
+                );
+
+                $("#parse-annotation a.edit-link").click(onEditParseAnnotationClick);
+              }
+
+            });
+
+            return false;
+          }
+
+          // Handle edit parse annotation link
+          $("#parse-annotation a.edit-link").click(onEditParseAnnotationClick);
+
+          function onEditParseAnnotationClick(e) {
+            e.preventDefault();
+            $("#parse-annotation").html(editParseAnnotatTmpl());
+            $(".parse-annotate-link").click(onParseAnnotateClick);
+            return false
+          }
+
+          // Handle the question voting buttons
+          $(".question-actions button.btn-vote").click(function(e) {
+            e.preventDefault();
+
+            var target = $(this);
+            var vote_endpoint = endpoint + "vote/";
+            var data = target.data();
+
+            $.post(vote_endpoint, data, function(result) {
+
+              // Update the buttons according to the response
+              $.each($(".question-actions button.btn-vote"), function(idx, obj) {
+                obj  = $(obj);
+                data = obj.data();
+
+                // Handle the indication class
+                if (data.vote == result.vote) {
+                  obj.addClass("btn-warning");
+                } else {
+                  obj.removeClass("btn-warning");
+                }
+
+                // Handle the count inside of the span
+                var span = obj.find("span.vote-count");
+                if (data.vote == 1) {
+                  span.text(result.upvotes);
+                } else if (data.vote == -1) {
+                  span.text(result.downvotes);
+                } else {
+                  span.text("0");
+                }
+
+              });
+
+            });
+
+            return false;
+
+          })
 
 
         });
