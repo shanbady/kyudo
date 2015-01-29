@@ -19,6 +19,8 @@ Views for the Fugato app
 
 from fugato.models import *
 from fugato.serializers import *
+from voting.serializers import *
+from freebase.serializers import *
 from django.views.generic import DetailView
 from rest_framework import viewsets
 from users.permissions import IsAuthorOrReadOnly
@@ -87,6 +89,18 @@ class QuestionViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['get'], permission_classes=[IsAuthenticated])
+    def annotations(self, request, pk=None):
+        """
+        Returns a list of all annotations associated with the question
+        """
+        question   = self.get_object()
+        concepts   = question.annotations.order_by('-modified')
+        page       = self.paginate_queryset(concepts)
+        serializer = PaginatedTopicAnnotationSerializer(page, context={'request': request})
+
+        return Response(serializer.data)
 
 class AnswerViewSet(viewsets.ModelViewSet):
 

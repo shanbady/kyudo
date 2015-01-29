@@ -37,9 +37,10 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
-router.register(r'freebase', FreebaseViewSet, "Freebase")
-router.register(r'parse', ParserViewSet, "Parse")
-router.register(r'status', HeartbeatViewSet, "Status")
+router.register(r'freebase', FreebaseViewSet, "freebase")
+router.register(r'parse', ParserViewSet, "parse")
+router.register(r'status', HeartbeatViewSet, "status")
+router.register(r'annotations', TopicAnnotationViewSet, "annotation")
 
 ##########################################################################
 ## URL Patterns for the app
