@@ -70,6 +70,10 @@ class ParseAnnotationModelTest(TestCase):
         self.assertEqual(ParseAnnotation.objects.count(), 1, "parse annotation not created on question save")
         self.assertIsNotNone(question.parse_annotation)
 
+##########################################################################
+## Fugato API Views tests
+##########################################################################
+
 class QuestionAPIViewSetTest(TestCase):
 
     def setUp(self):

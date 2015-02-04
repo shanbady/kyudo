@@ -110,6 +110,7 @@ INSTALLED_APPS = (
     'users',    # Handles Google OAuth and Profiles
     'fugato',   # Initial query collection app
     'freebase', # Handles the knowledge base and RDF api
+    'stream',   # Implements an activity stream for the app
     'voting',   # Handles the upvoting and downvoting of objects
 )
 

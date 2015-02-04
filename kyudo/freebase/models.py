@@ -60,12 +60,18 @@ class TopicAnnotation(TimeStampedModel):
     question = models.ForeignKey( 'fugato.Question', related_name='annotations' )
     user     = models.ForeignKey( 'auth.User', related_name='annotations', **nullable )
 
+    class Meta:
+        db_table = "annotations"
+        get_latest_by = "created"
+
     def is_ambiguous(self):
         """
         Decides if the annotation is ambiguous or not
         """
         return self.topic is None
 
-    class Meta:
-        db_table = "annotations"
-        get_latest_by = "created"
+    def __unicode__(self):
+        if self.topic:
+            return unicode(self.topic)
+        else:
+            return self.text
