@@ -22,6 +22,7 @@ import time
 from django.db import models
 from voting.models import Vote
 from django.conf import settings
+from stream.signals import stream
 from autoslug import AutoSlugField
 from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
@@ -193,6 +194,21 @@ def create_post_annotation(sender, instance, created, **kwargs):
     if created:
         ParseAnnotation.objects.create(question=instance, user=None, correct=None)
 
+@receiver(post_save, sender=Question)
+def send_asked_activity_signal(sender, instance, created, **kwargs):
+    """
+    Sends the "asked" activity to the stream on Question create
+    """
+    if created:
+        joined = {
+            'sender':    sender,
+            'actor':     instance.author,
+            'verb':      'ask',
+            'target':    instance,
+            'timestamp': instance.created,
+        }
+        stream.send(**joined)
+
 ##########################################################################
 ## Answer Signals
 ##########################################################################
@@ -201,3 +217,19 @@ def create_post_annotation(sender, instance, created, **kwargs):
 def answer_render_markdown(sender, instance, *args, **kwargs):
     if instance.text is not None:
         instance.text_rendered = htmlize(instance.text)
+
+@receiver(post_save, sender=Answer)
+def send_answered_activity_signal(sender, instance, created, **kwargs):
+    """
+    Sends the "answered" activity to the stream on Question create
+    """
+    if created:
+        joined = {
+            'sender':    sender,
+            'actor':     instance.author,
+            'verb':      'answer',
+            'theme':     instance,
+            'target':    instance.question,
+            'timestamp': instance.created,
+        }
+        stream.send(**joined)

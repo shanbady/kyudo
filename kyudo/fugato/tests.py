@@ -20,10 +20,17 @@ Tests the fugato app
 from unittest import skip
 from fugato.models import *
 from voting.models import *
+from stream.signals import stream
+from stream.models import StreamItem
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APIClient
+
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 ##########################################################################
 ## Fixtures
@@ -47,12 +54,93 @@ fixtures = {
     'question': {
         'text': 'Why did the chicken cross the road?',
         'author': None
+    },
+    'answer': {
+        'question': None,
+        'author': None,
+        'text': 'To get to the other side.',
     }
 }
 
 ##########################################################################
 ## Fugato models tests
 ##########################################################################
+
+class QuestionModelTest(TestCase):
+
+    def setUp(self):
+        self.user   = User.objects.create_user(**fixtures['user'])
+        fixtures['question']['author'] = self.user
+
+    def test_question_ask_send_stream(self):
+        """
+        Assert that when a question is created it sends the "ask" stream signal
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        question = Question.objects.create(**fixtures['question'])
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='ask', sender=Question,
+                    timestamp=question.created, actor=self.user,
+                    target=question, signal=stream)
+
+    def test_question_asked_activity(self):
+        """
+        Assert that when a question is asked, there is an activity stream item
+        """
+        question = Question.objects.create(**fixtures['question'])
+        target_content_type = ContentType.objects.get_for_model(question)
+        target_object_id    =  question.id
+
+        query = StreamItem.objects.filter(verb='ask', actor=self.user,
+                    target_content_type=target_content_type, target_object_id=target_object_id)
+        self.assertEqual(query.count(), 1, "no stream item created!")
+
+class AnswerModelTest(TestCase):
+
+    def setUp(self):
+        self.user     = User.objects.create_user(**fixtures['user'])
+        fixtures['question']['author'] = self.user
+        fixtures['answer']['author'] = self.user
+
+        self.question = Question.objects.create(**fixtures['question'])
+        fixtures['answer']['question'] = self.question
+
+    def test_question_answer_send_stream(self):
+        """
+        Assert that when an Answer is created it sends the "answer" stream signal
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        answer  = Answer.objects.create(**fixtures['answer'])
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='answer', sender=Answer,
+                    timestamp=answer.created, actor=self.user, theme=answer,
+                    target=self.question, signal=stream)
+
+    def test_question_answered_activity(self):
+        """
+        Assert that when a question is answered, there is an activity stream item
+        """
+        answer  = Answer.objects.create(**fixtures['answer'])
+        target_content_type = ContentType.objects.get_for_model(answer.question)
+        target_object_id    =  answer.question.id
+        theme_content_type  = ContentType.objects.get_for_model(answer)
+        theme_object_id     = answer.id
+
+        query   = {
+            'verb': 'answer',
+            'actor': self.user,
+            'target_content_type': target_content_type,
+            'target_object_id': target_object_id,
+            'theme_content_type': theme_content_type,
+            'theme_object_id': theme_object_id,
+        }
+
+        query = StreamItem.objects.filter(**query)
+        self.assertEqual(query.count(), 1, "no stream item created!")
 
 class ParseAnnotationModelTest(TestCase):
 
