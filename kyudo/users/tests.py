@@ -20,9 +20,16 @@ Tests for the users app
 import hashlib
 
 from users.models import Profile
+from stream.signals import stream
+from stream.models import StreamItem
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 ##########################################################################
 ## User Fixture
@@ -41,6 +48,28 @@ fixtures = {
 ##########################################################################
 ## Model Tests
 ##########################################################################
+
+class UserModelTest(TestCase):
+
+    def test_user_create_send_stream(self):
+        """
+        Assert that when a user is created it sends the "join" stream signal
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        user = User.objects.create_user(username='bob', email='bob@example.com', password='secret')
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='join', sender=User, actor=user,
+            timestamp=user.date_joined, signal=stream)
+
+    def test_user_joined_activity(self):
+        """
+        Assert that when a user joins, there is an activity stream item
+        """
+        user  = User.objects.create_user(username='bob', email='bob@example.com', password='secret')
+        query = StreamItem.objects.filter(verb='join', actor=user)
+        self.assertEqual(query.count(), 1, "no stream item created!")
 
 class ProfileModelTest(TestCase):
 

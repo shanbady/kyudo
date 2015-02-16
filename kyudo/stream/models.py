@@ -54,6 +54,7 @@ class StreamItem(models.Model):
     """
 
     ## Potential actions (verbs) for the activity stream
+    ## DB storage is the infinitive, display is past tense
     VERBS = Choices(
             ('join', 'joined'),
             ('view', 'viewed'),
