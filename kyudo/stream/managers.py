@@ -34,4 +34,4 @@ class StreamItemManager(models.Manager):
         if privacy:
             queryset = queryset.filter(public=True)
 
-        return queryset
+        return queryset.order_by('timestamp')

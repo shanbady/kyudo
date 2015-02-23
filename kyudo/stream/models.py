@@ -104,6 +104,43 @@ class StreamItem(models.Model):
         """
         return timesince(self.timestamp, now).encode('utf8').replace(b'\xc2\xa0', b' ').decode('utf8')
 
+    def get_object_url(self, obj):
+        """
+        Returns the URL of an object by using the `get_absolute_url` method
+        otherwise returns None. (Shouldn't raise an error).
+        """
+        if hasattr(obj, 'get_absolute_url') and callable(obj.get_absolute_url):
+            return obj.get_absolute_url()
+        return None
+
+    def get_actor_url(self):
+        return self.get_object_url(self.actor)
+
+    def get_target_url(self):
+        return self.get_object_url(self.target)
+
+    def get_theme_url(self):
+        return self.get_absolute_url(self.theme)
+
+    def get_object_html(self, obj, strfunc=unicode):
+        """
+        Returns an HTML representation of an object, basically an anchor
+        to the object's absolute URL or just the plain string representation.
+        """
+        href = self.get_object_url(obj)
+        if href is None:
+            return strfunc(obj)
+        return u'<a href="%s" title="%s">%s</a>' % (href, strfunc(obj), strfunc(obj))
+
+    def get_actor_html(self):
+        return self.get_object_html(self.actor, lambda actor: actor.username)
+
+    def get_target_html(self):
+        return self.get_object_html(self.target)
+
+    def get_theme_html(self):
+        return self.get_object_html(self.theme)
+
     def __unicode__(self):
         context = {
             'actor': self.actor.username,
