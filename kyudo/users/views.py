@@ -46,7 +46,8 @@ class ProfileView(LoginRequired, TemplateView):
         context to render the template.
         """
         context = super(ProfileView, self).get_context_data(**kwargs)
-        context['user']  = self.request.user
+        context['user'] = self.request.user
+        context['activity_stream'] = self.request.user.activity_stream.all()[:10]
         return context
 
 ##########################################################################

@@ -18,9 +18,9 @@ Views for the Fugato app
 ##########################################################################
 
 from fugato.models import *
+from voting.models import Vote
 from fugato.serializers import *
 from voting.serializers import *
-from freebase.serializers import *
 from django.views.generic import DetailView
 from rest_framework import viewsets
 from users.permissions import IsAuthorOrReadOnly
@@ -70,21 +70,24 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
+        """
+        Note that the upvotes and downvotes keys are required by the front-end
+        """
         question   = self.get_object()
         serializer = VotingSerializer(data=request.DATA, context={'request': request})
         if serializer.is_valid():
 
             kwargs = {
-                'question': question,
+                'content': question,
                 'user': request.user,
-                'defaults': {
-                    'vote': serializer.data['vote'],
-                }
+                'vote': serializer.validated_data['vote'],
             }
 
-            _, created = QuestionVote.objects.update_or_create(**kwargs)
+            _, created = Vote.objects.punch_ballot(**kwargs)
             response = serializer.data
-            response.update({'status': 'vote recorded', 'created': created})
+            response.update({'status': 'vote recorded', 'created': created,
+                             'upvotes': question.votes.upvotes().count(),
+                             'downvotes': question.votes.downvotes().count()})
             return Response(response)
         else:
             return Response(serializer.errors,

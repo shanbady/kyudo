@@ -19,10 +19,18 @@ Tests the fugato app
 
 from unittest import skip
 from fugato.models import *
+from voting.models import *
+from stream.signals import stream
+from stream.models import StreamItem
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APIClient
+
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 ##########################################################################
 ## Fixtures
@@ -36,15 +44,103 @@ fixtures = {
         'email': 'jdoe@example.com',
         'password': 'supersecret',
     },
+    'voter' : {
+        'username': 'bobbyd',
+        'first_name': 'Bob',
+        'last_name': 'Dylan',
+        'email': 'bobby@example.com',
+        'password': 'dontguessthis',
+    },
     'question': {
         'text': 'Why did the chicken cross the road?',
         'author': None
+    },
+    'answer': {
+        'question': None,
+        'author': None,
+        'text': 'To get to the other side.',
     }
 }
 
 ##########################################################################
 ## Fugato models tests
 ##########################################################################
+
+class QuestionModelTest(TestCase):
+
+    def setUp(self):
+        self.user   = User.objects.create_user(**fixtures['user'])
+        fixtures['question']['author'] = self.user
+
+    def test_question_ask_send_stream(self):
+        """
+        Assert that when a question is created it sends the "ask" stream signal
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        question = Question.objects.create(**fixtures['question'])
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='ask', sender=Question,
+                    timestamp=question.created, actor=self.user,
+                    target=question, signal=stream)
+
+    def test_question_asked_activity(self):
+        """
+        Assert that when a question is asked, there is an activity stream item
+        """
+        question = Question.objects.create(**fixtures['question'])
+        target_content_type = ContentType.objects.get_for_model(question)
+        target_object_id    =  question.id
+
+        query = StreamItem.objects.filter(verb='ask', actor=self.user,
+                    target_content_type=target_content_type, target_object_id=target_object_id)
+        self.assertEqual(query.count(), 1, "no stream item created!")
+
+class AnswerModelTest(TestCase):
+
+    def setUp(self):
+        self.user     = User.objects.create_user(**fixtures['user'])
+        fixtures['question']['author'] = self.user
+        fixtures['answer']['author'] = self.user
+
+        self.question = Question.objects.create(**fixtures['question'])
+        fixtures['answer']['question'] = self.question
+
+    def test_question_answer_send_stream(self):
+        """
+        Assert that when an Answer is created it sends the "answer" stream signal
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        answer  = Answer.objects.create(**fixtures['answer'])
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='answer', sender=Answer,
+                    timestamp=answer.created, actor=self.user, theme=answer,
+                    target=self.question, signal=stream)
+
+    def test_question_answered_activity(self):
+        """
+        Assert that when a question is answered, there is an activity stream item
+        """
+        answer  = Answer.objects.create(**fixtures['answer'])
+        target_content_type = ContentType.objects.get_for_model(answer.question)
+        target_object_id    =  answer.question.id
+        theme_content_type  = ContentType.objects.get_for_model(answer)
+        theme_object_id     = answer.id
+
+        query   = {
+            'verb': 'answer',
+            'actor': self.user,
+            'target_content_type': target_content_type,
+            'target_object_id': target_object_id,
+            'theme_content_type': theme_content_type,
+            'theme_object_id': theme_object_id,
+        }
+
+        query = StreamItem.objects.filter(**query)
+        self.assertEqual(query.count(), 1, "no stream item created!")
 
 class ParseAnnotationModelTest(TestCase):
 
@@ -61,6 +157,10 @@ class ParseAnnotationModelTest(TestCase):
 
         self.assertEqual(ParseAnnotation.objects.count(), 1, "parse annotation not created on question save")
         self.assertIsNotNone(question.parse_annotation)
+
+##########################################################################
+## Fugato API Views tests
+##########################################################################
 
 class QuestionAPIViewSetTest(TestCase):
 
@@ -123,19 +223,50 @@ class QuestionAPIViewSetTest(TestCase):
         response = self.client.delete(endpoint)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @skip("pending implementation")
     def test_question_parse_detail_auth(self):
         """
         Assert GET /api/question/:id/parse returns 403 when not logged in
         """
-        pass
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "parse/"
 
-    @skip("pending implementation")
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_question_parse_update_auth(self):
         """
-        Assert PUT /api/question/:id/parse returns 403 when not logged in
+        Assert POST /api/question/:id/parse returns 403 when not logged in
         """
-        pass
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "parse/"
+
+        response = self.client.post(endpoint, {'correct': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_question_vote_post_auth(self):
+        """
+        Assert POST /api/question/:id/vote returns 403 when not logged in
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_question_vote_get_auth(self):
+        """
+        Assert GET /api/question/:id/vote returns a 400
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.login()
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @skip("pending implementation")
     def test_question_list(self):
@@ -243,3 +374,65 @@ class QuestionAPIViewSetTest(TestCase):
         self.assertIn('correct', result.data)
         self.assertFalse(result.data['correct'])
         self.assertFalse(Question.objects.get(pk=question.pk).parse_annotation.correct)
+
+    def test_question_create_vote(self):
+        """
+        Assert POST /api/question/:id/vote creates a vote for a user
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 0)
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = {'created': True, 'status': 'vote recorded', 'display': 'upvote'}
+        self.assertDictContainsSubset(expected, response.data)
+
+        self.assertEqual(question.votes.count(), 1)
+
+    def test_question_update_vote(self):
+        """
+        Assert POST /api/question/:id/vote updates if already voted
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        vote, _  = Vote.objects.punch_ballot(content=question, user=self.user, vote=1)
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 1)
+
+        response = self.client.post(endpoint, {'vote': -1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = {'created': False, 'status': 'vote recorded', 'display': 'downvote'}
+        self.assertDictContainsSubset(expected, response.data)
+
+        self.assertEqual(question.votes.count(), 1)
+
+    def test_question_vote_response(self):
+        """
+        Ensure POST /api/question/:id/vote response contains expected data
+        """
+        self.login()
+
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "vote/"
+
+        self.assertEqual(question.votes.count(), 0)
+
+        response = self.client.post(endpoint, {'vote': 1}, format='json')
+        expected = {
+            'created': True,
+            'status': 'vote recorded',
+            'display': 'upvote',
+            'upvotes': 1,                   # Required for Question FE app (resets button counts)
+            'downvotes': 0,                 # Required for Question FE app (resets button counts)
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for key, val in expected.items():
+            self.assertIn(key, response.data)
+            self.assertEqual(val, response.data[key])

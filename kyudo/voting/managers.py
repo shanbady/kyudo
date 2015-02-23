@@ -18,6 +18,7 @@ Custom manager model for voting objects
 ##########################################################################
 
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 
 ##########################################################################
 ## Voting Manager
@@ -36,3 +37,21 @@ class VotingManager(models.Manager):
         Return only the down votes
         """
         return self.filter(vote=self.model.BALLOT.downvote)
+
+    def punch_ballot(self, content=None, user=None, vote=0):
+        """
+        Essentially `update_or_create` with ContentType lookup
+        """
+        if content is None or user is None:
+            raise TypeError("content and user are required for punch ballot")
+
+        kwargs = {
+            'content_type': ContentType.objects.get_for_model(content),
+            'object_id': content.id,
+            'user': user,
+            'defaults': {
+                'vote': vote,
+            }
+        }
+
+        return self.update_or_create(**kwargs)
