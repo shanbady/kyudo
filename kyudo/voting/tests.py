@@ -26,6 +26,14 @@ from voting.models import *
 from voting.serializers import *
 from django.contrib.auth.models import User
 
+from stream.signals import stream
+from stream.models import StreamItem
+
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
+
 ##########################################################################
 ## Fixtures
 ##########################################################################
@@ -141,3 +149,39 @@ class VotingModelTests(TestCase):
         self.assertRaises(TypeError, Vote.objects.punch_ballot, content=self.question)
         self.assertRaises(TypeError, Vote.objects.punch_ballot, user=self.user)
 
+    def test_upvote_send_stream(self):
+        """
+        Assert that 'upvote' stream signal is sent
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        vote, created = Vote.objects.punch_ballot(self.question, self.user, 1)
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='upvote', sender=Vote,
+            actor=self.user, target=self.question, signal=stream)
+
+    def test_downvote_send_stream(self):
+        """
+        Assert that 'downvote' stream signal is sent
+        """
+        handler = MagicMock()
+        stream.connect(handler)
+        vote, created = Vote.objects.punch_ballot(self.question, self.user, -1)
+
+        # Ensure that the signal was sent once with required arguments
+        handler.assert_called_once_with(verb='downvote', sender=Vote,
+            actor=self.user, target=self.question, signal=stream)
+
+    def test_voted_activity(self):
+        """
+        Assert that when a ballot is punched, there is an activity stream item
+        """
+        vote, created = Vote.objects.punch_ballot(self.question, self.user, 1)
+        target_content_type = ContentType.objects.get_for_model(self.question)
+        target_object_id    =  self.question.id
+
+        query = StreamItem.objects.filter(verb='upvote', actor=self.user,
+                    target_content_type=target_content_type, target_object_id=target_object_id)
+
+        self.assertEqual(query.count(), 1, "no stream item created!")

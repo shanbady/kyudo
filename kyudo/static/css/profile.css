@@ -68,3 +68,8 @@
     -moz-transition: opacity 0.3s ease-in-out;
     transition: opacity 0.3s ease-in-out;
 }
+
+ul.activity-stream li {
+    margin: 10px 0;
+    color: #333;
+}

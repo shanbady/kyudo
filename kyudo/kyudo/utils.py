@@ -31,6 +31,9 @@ from markdown import markdown
 ## Nullable kwargs for models
 nullable = { 'blank': True, 'null': True, 'default':None }
 
+## Not nullable kwargs for models
+notnullable = { 'blank': False, 'null': False }
+
 ##########################################################################
 ## Helper functions
 ##########################################################################
