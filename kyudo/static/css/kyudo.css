@@ -122,3 +122,34 @@ img.navbar-gravatar {
 .question-details {
   min-height: 30px;
 }
+
+/* Questions and Answers */
+
+.question {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+
+.question-byline, .answer-info {
+  height: 34px;
+}
+
+.question-byline img, .answer-info img {
+  width: 32px;
+  height: 32px;
+  float: left;
+  margin-right: 8px;
+
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px
+}
+
+.question-byline  p, .answer-info p {
+  margin: -2px 0px 0px 0px;
+}
+
+.question-details {
+  margin: 10px 0px;
+}

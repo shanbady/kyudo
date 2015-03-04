@@ -1,6 +1,8 @@
 from unittest import skip
 from django.test import TestCase
 
+from freebase.serializers import TopicAnnotationSerializer
+
 class TopicManagerTests(TestCase):
 
     @skip("pending implementation")
@@ -37,6 +39,13 @@ class FreebaseSerializerTests(TestCase):
     def test_topic_annotation_serializer(self):
         """
         Test the default user, topic field, and other serializer details
+        """
+        pass
+
+    @skip("pending implementation")
+    def test_topic_annotation_serializer_url(self):
+        """
+        Assert the URL is correctly found with the view_name kwarg
         """
         pass
 

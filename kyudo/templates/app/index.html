@@ -2,41 +2,6 @@
 {% load staticfiles %}
 {# This page displays the question feeds app #}
 
-  {% block stylesheets %}
-    {{ block.super }}
-    <style type="text/css">
-      .question {
-        padding-bottom: 12px;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 8px;
-      }
-
-      .question-byline {
-        height: 34px;
-      }
-
-      .question-byline img {
-        width: 32px;
-        height: 32px;
-        float: left;
-        margin-right: 8px;
-
-        -moz-border-radius: 4px;
-        -webkit-border-radius: 4px;
-        border-radius: 4px
-      }
-
-      .question-byline  p {
-        margin: -2px 0px 0px 0px;
-      }
-
-      .question-details {
-        margin: 10px 0px;
-      }
-
-    </style>
-  {% endblock %}
-
   {% block content %}
 
     <div class="container">

@@ -14,9 +14,26 @@
         margin: 10px 0;
       }
 
+      .question-details-form {
+        margin-bottom: 20px;
+      }
+
       .ambiguous {
         cursor: help;
       }
+
+      #questionHeader, #writeAnswer, .answer {
+        border-bottom: 1px solid #b7b7b7;
+      }
+
+      .answer, #writeAnswer, #scientificDetails {
+        padding: 14px 0;
+      }
+
+      .answer-text {
+        margin: 18px 0 18px 0;
+      }
+
     </style>
   {% endblock %}
 
@@ -58,90 +75,168 @@
         </div><!-- end left column -->
 
         <!-- Middle Column -->
-        <div class="col-md-8">
+        <div class="col-md-7">
 
           <!-- question header -->
-          <h2 id="questionText">{{ question.text }}</h2>
-          <p class="text-muted">
-            <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
-          </p>
+          <div id="questionHeader">
+            <h2 id="questionText">{{ question.text }}</h2>
+            <p class="text-muted">
+              <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
+            </p>
 
-          <!-- question actions -->
-          <div class="question-actions">
-            {% current_user_vote question as voted %}
+            <!-- question actions -->
+            <div class="question-actions">
+              {% current_user_vote question as voted %}
 
-            <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
-                    type="button" data-vote="1">
-              <i class="fa fa-thumbs-up"></i> |
-              <span class="vote-count">{{ question.votes.upvotes.count }}</span>
-            </button>
+              <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                      type="button" data-vote="1" data-candidate="{{ question.get_api_detail_url }}">
+                <i class="fa fa-thumbs-up"></i> |
+                <span class="vote-count">{{ question.votes.upvotes.count }}</span>
+              </button>
 
-            <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
-                    type="button" data-vote="-1">
-              <i class="fa fa-thumbs-down"></i> |
-              <span class="vote-count">{{ question.votes.downvotes.count }}</span>
-            </button>
+              <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                      type="button" data-vote="-1" data-candidate="{{ question.get_api_detail_url }}">
+                <i class="fa fa-thumbs-down"></i> |
+                <span class="vote-count">{{ question.votes.downvotes.count }}</span>
+              </button>
 
-            <div class="pull-right">
-              {% if question.author == request.user %}
-              {% if question.details %}
-              <p><a class="edit-details" href="#">Edit Details</a></p>
-              {% else %}
-              <p><a class="edit-details" href="#">Add Details</a></p>
-              {% endif %}
-              {% endif %}
-            </div>
-            <div class="clearfix"></div>
-          </div>
-
-          <!-- question details -->
-          <div class="question-details">
-            {% if question.details %}
-            {{ question.details_rendered|safe }}
-            {% endif %}
-          </div>
-
-          <!-- question details form -->
-          <div class="question-details-form">
-            <form role="form" id="formQuestionDetails" class="hidden">
-              <div class="form-group">
-                <textarea id="txtQuestionDetails" class="form-control" rows="8">{% if question.details %}{{ question.details }}{% endif %}</textarea>
-                <span class="help-block pull-left">Edit Details in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
-              </div>
               <div class="pull-right">
-                <button id="btnCancelEditDetails" type="button" class="btn btn-default btn-sm">Cancel</button>
-                <button id="btnSubmitEditDetails" type="submit" class="btn btn-primary btn-sm">Update</button>
+                {% if question.author == request.user %}
+                {% if question.details %}
+                <p><a class="edit-details" href="#">Edit Details</a></p>
+                {% else %}
+                <p><a class="edit-details" href="#">Add Details</a></p>
+                {% endif %}
+                {% endif %}
               </div>
               <div class="clearfix"></div>
-            </form>
-          </div>
+            </div>
+
+            <!-- question details -->
+            <div class="question-details">
+              {% if question.details %}
+              {{ question.details_rendered|safe }}
+              {% endif %}
+            </div>
+
+            <!-- question details form -->
+            <div class="question-details-form">
+              <form role="form" id="formQuestionDetails" class="hidden">
+                <div class="form-group">
+                  <textarea id="txtQuestionDetails" class="form-control" rows="8">{% if question.details %}{{ question.details }}{% endif %}</textarea>
+                  <span class="help-block pull-left">Edit Details in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
+                </div>
+                <div class="pull-right">
+                  <button id="btnCancelEditDetails" type="button" class="btn btn-default btn-sm">Cancel</button>
+                  <button id="btnSubmitEditDetails" type="submit" class="btn btn-primary btn-sm">Update</button>
+                </div>
+                <div class="clearfix"></div>
+              </form>
+            </div>
+
+            <!-- answes meta data -->
+            <div id="answerMeta">
+            {% with count=question.answers.count %}
+              <p class="pull-left"><strong>{{ count }} ANSWER{{ count|pluralize:"S" }}</strong></p>
+              <p class="pull-right"><a href="#writeAnswer">Answer Question</a></p>
+            {% endwith %}
+              <div class="clearfix"></div>
+            </div>
+          </div><!-- end question header -->
 
           <!-- answers list -->
+          <div id="answerList">
+            {% for answer in question.answers.all %}
+
+            <div class="answer">
+              <!-- answer info (author, date) -->
+              <div class="answer-info">
+                <img title="{{ answer.author }}" src="{{ answer.author.profile.gravatar }}" />
+                {% if answer.author.get_full_name %}
+                <p>answered by <strong>{{ answer.author.get_full_name }}</strong></p>
+                {% else %}
+                <p>answered by <strong>{{ answer.author.username }}</strong></p>
+                {% endif %}
+                <p class="text-muted"><small>answered on {{ answer.created|date }}</small></p>
+              </div>
+
+              <!-- answer text -->
+              <div class="answer-text">
+                {{ answer.text_rendered|safe }}
+              </div>
+
+              <!-- answer actions (vote, comment) -->
+              <div class="answer-actions">
+                {% current_user_vote answer as voted %}
+
+                <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                        type="button" data-vote="1" data-candidate="{{ answer.get_api_detail_url }}">
+                  <i class="fa fa-thumbs-up"></i> |
+                  <span class="vote-count">{{ answer.votes.upvotes.count }}</span>
+                </button>
+
+                <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                        type="button" data-vote="-1" data-candidate="{{ answer.get_api_detail_url }}">
+                  <i class="fa fa-thumbs-down"></i> |
+                  <span class="vote-count">{{ answer.votes.downvotes.count }}</span>
+                </button>
+              </div>
+            </div>
+            {% empty %}
+            <div class="answer">
+              <h4 class="text-center">Be the first to answer this question!</h4>
+            </div>
+            {% endfor %}
+          </div><!-- end answer list -->
+
+          <!-- add answer -->
+          <div id="writeAnswer">
+            <div class="question-details-form">
+              <h4>Compose an answer</h4>
+              <form role="form" id="answerForm" class="" action="{% url 'api:answer-list' %}" method="POST">
+                <div class="form-group">
+                  <textarea id="answerText" name="text" class="form-control" rows="8"></textarea>
+                  <span class="help-block pull-left">Edit Answer in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
+                  <span class="help-block pull-left" id="textFormError"></span>
+                </div>
+                <div class="pull-right">
+                  <input type="hidden" id="answerQuestion" name="question" class="form-control" value="{{ question.get_api_detail_url }}" />
+                  <button id="submitAnswer" type="submit" class="btn btn-primary btn-sm">
+                    Post your Answer
+                  </button>
+                </div>
+                <div class="clearfix"></div>
+              </form>
+            </div>
+          </div><!-- end write answer -->
 
           <!-- scientific details -->
-          <hr />
-          <pre>{{ question.parse }}</pre>
-          <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
-          <p id="parse-annotation" class="text-muted pull-right editable-item">
-            {% if question.parse_annotation.is_annotated %}
-              {% if question.parse_annotation.correct %}
-              marked <span class="text-success">correct</span> by {{ question.parse_annotation.user.username }}
+          <div id="scientificDetails">
+            <h4>Scientific Details</h4>
+            <pre>{{ question.parse }}</pre>
+            <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
+            <p id="parse-annotation" class="text-muted pull-right editable-item">
+              {% if question.parse_annotation.is_annotated %}
+                {% if question.parse_annotation.correct %}
+                marked <span class="text-success">correct</span> by {{ question.parse_annotation.user.username }}
+                {% else %}
+                marked <span class="text-danger">incorrect</span> by {{ question.parse_annotation.user.username }}
+                {% endif %}
+                <a href="#" class="edit-link"></a>
               {% else %}
-              marked <span class="text-danger">incorrect</span> by {{ question.parse_annotation.user.username }}
+              is this parse
+              <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
+              or
+              <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
               {% endif %}
-              <a href="#" class="edit-link"></a>
-            {% else %}
-            is this parse
-            <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
-            or
-            <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
-            {% endif %}
-          </p>
+            </p>
+          </div><!-- end scientific details -->
+
           <div class="clearfix"></div>
         </div><!-- end middle column -->
 
         <!-- Right column -->
-        <div class="col-md-2 question-sidebar">
+        <div class="col-md-3 question-sidebar">
           <h5>Related Questions</h5>
           <ul class="list-unstyled">
             {% for related in question.related.all %}
@@ -247,6 +342,7 @@
   {% endblock %}
 
   {% block javascripts %}
+    <script type="text/javascript" src="{% static 'js/libs/moment.js' %}"></script>
     {{ block.super }}
 
     <script type="text/template" class="template" id="parseAnnotationTemplate">
@@ -273,6 +369,37 @@
         </a>
         <small class="text-muted"><%= notable %></small>
       </li>
+    </script>
+
+    <script type="text/template" class="template" id="answerTemplate">
+      <div class="answer">
+        <!-- answer info (author, date) -->
+        <div class="answer-info">
+          <img title="<%= author %>" src="<%= gravatar %>" />
+          <p>answered by <strong><%= author %></strong></p>
+          <p class="text-muted"><small>answered on <%= created %></small></p>
+        </div>
+
+        <!-- answer text -->
+        <div class="answer-text">
+          <%= text_rendered %>
+        </div>
+
+        <!-- answer actions (vote, comment) -->
+        <div class="answer-actions">
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-up"></i> |
+            <span class="vote-count">0</span>
+          </button>
+
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="-1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-down"></i> |
+            <span class="vote-count">0</span>
+          </button>
+        </div>
+      </div>
     </script>
 
     <script type="text/javascript">
@@ -364,6 +491,77 @@
           });
 
           ////////////////////////////////////////////////////////////////
+          /// Write or Update answers
+          ////////////////////////////////////////////////////////////////
+
+          var createAnswerEndpoint = "{% url 'api:answer-list' %}";
+          var answerTmpl = _.template($("#answerTemplate").html());
+
+          // Handle answer form submit
+          $("#answerForm").submit(function(e) {
+            e.preventDefault();
+
+            // Set form state
+            var form = $(this);
+            form.find("button").attr('disabled', 'disabled');
+
+            // Collect data from form
+            var formData = getFormData(form);
+
+            // Select endpoint (important for when we update answers)
+            var endpoint = form.attr("action");
+            var method   = form.attr("method");
+
+            // Send the data to the endpoint
+            $.ajax({
+              url: endpoint,
+              method: method,
+              data: formData
+            }).done(function(data) {
+
+              console.log(data);
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+              form.find("textarea").val("");
+
+              // Append the answer (in the future, update answer)
+              var full_name = data.author.first_name + " " + data.author.last_name;
+              full_name     = full_name.trim();
+
+              var answer    = $(answerTmpl({
+                  author: full_name ? full_name : data.author.username,
+                  gravatar: data.author.profile.gravatar,
+                  text_rendered: data.text_rendered,
+                  url: data.url,
+                  created: moment(data.created).format("MMMM D, YYYY")
+                }));
+              answer.find('button.btn-vote').click(onVote)
+              $("#answerList").append(answer);
+
+            }).fail(function(jqxhr, status, error) {
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+
+              // Set error state
+              form.addClass('has-error');
+
+              $.each(jqxhr.responseJSON, function(field, errors) {
+                block = $("span#" + field + "FormError");
+                if (block) {
+                  block.text(errors[0]);
+                }
+              });
+
+              console.log(jqxhr.responseJSON);
+              console.log(error);
+            });
+
+
+
+            return false;
+          });
+
+          ////////////////////////////////////////////////////////////////
           /// Parse Annotation
           ////////////////////////////////////////////////////////////////
 
@@ -409,17 +607,20 @@
           ////////////////////////////////////////////////////////////////
 
           // Handle the question voting buttons
-          $(".question-actions button.btn-vote").click(function(e) {
+          $("button.btn-vote").click(onVote);
+
+          function onVote(e) {
             e.preventDefault();
 
             var target = $(this);
-            var vote_endpoint = endpoint + "vote/";
-            var data = target.data();
+            var data   = target.data();
+            var vote_endpoint = data.candidate + "vote/";
+            var parent = target.parent();
 
             $.post(vote_endpoint, data, function(result) {
 
               // Update the buttons according to the response
-              $.each($(".question-actions button.btn-vote"), function(idx, obj) {
+              $.each(parent.find("button.btn-vote"), function(idx, obj) {
                 obj  = $(obj);
                 data = obj.data();
 
@@ -446,14 +647,14 @@
 
             return false;
 
-          })
+          }
 
           ////////////////////////////////////////////////////////////////
           /// Topic Annotation
           ////////////////////////////////////////////////////////////////
 
           var topicEndpoint        = "/api/freebase/";
-          var qtaEndpoint          = endpoint + "/annotations/";
+          var qtaEndpoint          = endpoint + "annotations/";
           var editTopicModal       = $("#editTopicModal");
           var topicSearch          = $("#topicSearch");
           var topicAnnotation      = $("#topicAnnotation");
@@ -524,12 +725,7 @@
 
             // Get information to POST
             var action   = topicAnnotationForm.attr('action');
-            var formData = _.object(topicAnnotationForm
-                                      .serializeArray()
-                                      .map(function(v) {
-                                              return [v.name, v.value];
-                                            })
-                                    );
+            var formData = getFormData(topicAnnotationForm);
 
             // Disable form (after getting form data -- required)
             topicAnnotationText.attr('disabled', 'disabled');
@@ -715,6 +911,12 @@
           // Helper function to show elements
           function show(elem) {
             elem.addClass("show").removeClass("hidden");
+          }
+
+          // Helper function to collect form data
+          function getFormData(form) {
+            var data = form.serializeArray();
+            return _.object(data.map(function(v) { return [v.name, v.value]; }));
           }
 
         });

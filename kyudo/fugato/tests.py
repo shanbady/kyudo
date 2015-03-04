@@ -26,6 +26,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APIClient
+from urlparse import urlsplit
 
 try:
     from unittest.mock import MagicMock
@@ -253,6 +254,26 @@ class QuestionAPIViewSetTest(TestCase):
         response = self.client.post(endpoint, {'vote': 1}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_question_annotations_list_auth(self):
+        """
+        Assert GET /api/question/:id/annotations returns 403 when not logged in
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "annotations/"
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_question_answers_list_auth(self):
+        """
+        Assert GET /api/question/:id/answers returns 403 when not logged in
+        """
+        question = Question.objects.create(**fixtures['question'])
+        endpoint = question.get_api_detail_url() + "answers/"
+
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_question_vote_get_auth(self):
         """
         Assert GET /api/question/:id/vote returns a 400
@@ -436,3 +457,57 @@ class QuestionAPIViewSetTest(TestCase):
         for key, val in expected.items():
             self.assertIn(key, response.data)
             self.assertEqual(val, response.data[key])
+
+    @skip("pending implementation")
+    def test_question_annotations_list(self):
+        """
+        Ensure GET /api/question/:id/annotations response works
+        """
+        pass
+
+    @skip("pending implementation")
+    def test_question_answers_list(self):
+        """
+        Ensure GET /api/question/:id/answers response works
+        """
+        pass
+
+class AnswerAPIViewSetTest(TestCase):
+
+    def setUp(self):
+        self.usera  = User.objects.create_user(**fixtures['user'])
+        self.userb  = User.objects.create_user(**fixtures['voter'])
+
+        fixtures['question']['author'] = self.usera
+        fixtures['answer']['author']   = self.userb
+
+        self.question = Question.objects.create(**fixtures['question'])
+        fixtures['answer']['question'] = self.question
+
+        self.client = APIClient()
+
+    def login(self):
+        credentials = {
+            'username': fixtures['user']['username'],
+            'password': fixtures['user']['password'],
+        }
+
+        return self.client.login(**credentials)
+
+    def logout(self):
+        return self.client.logout();
+
+    def test_answer_url_view_kwarg(self):
+        """
+        Check that the answer provides a url
+        """
+        answer   = Answer.objects.create(**fixtures['answer'])
+        endpoint = answer.get_api_detail_url()
+
+        self.login()
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('url', response.data)
+
+        url      = urlsplit(response.data.get('url', '')).path
+        self.assertEqual(url, endpoint)

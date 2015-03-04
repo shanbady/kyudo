@@ -70,11 +70,12 @@ class TopicAnnotationSerializer(serializers.ModelSerializer):
 
     topic    = TopicField()
 
-    url      = serializers.HyperlinkedIdentityField(view_name='api:annotation-detail')
-
     class Meta:
         model  = TopicAnnotation
         fields = ('url', 'user', 'question', 'text', 'topic')
+        extra_kwargs = {
+            'url': {'view_name': 'api:annotation-detail',}
+        }
 
 class PaginatedTopicAnnotationSerializer(pagination.PaginationSerializer):
     """

@@ -106,6 +106,18 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    @detail_route(methods=['get'], permission_classes=[IsAuthenticated])
+    def answers(self, request, pk=None):
+        """
+        Returns a list of all answers associated with the question
+        """
+        question   = self.get_object()
+        answers    = question.answers.order_by('created') # TODO: order by vote count
+        page       = self.paginate_queryset(answers)
+        serializer = PaginatedAnswerSerializer(page, context={'request': request})
+
+        return Response(serializer.data)
+
 class AnswerViewSet(viewsets.ModelViewSet):
 
     queryset = Answer.objects.order_by('-created')
@@ -113,21 +125,24 @@ class AnswerViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
+        """
+        Note that the upvotes and downvotes keys are required by the front-end
+        """
         answer   = self.get_object()
         serializer = VotingSerializer(data=request.DATA, context={'request': request})
         if serializer.is_valid():
 
             kwargs = {
-                'answer': answer,
+                'content': answer,
                 'user': request.user,
-                'defaults': {
-                    'vote': serializer.data['vote'],
-                }
+                'vote': serializer.validated_data['vote'],
             }
 
-            _, created = AnswerVote.objects.update_or_create(**kwargs)
+            _, created = Vote.objects.punch_ballot(**kwargs)
             response = serializer.data
-            response.update({'status': 'vote recorded', 'created': created})
+            response.update({'status': 'vote recorded', 'created': created,
+                             'upvotes': answer.votes.upvotes().count(),
+                             'downvotes': answer.votes.downvotes().count()})
             return Response(response)
         else:
             return Response(serializer.errors,

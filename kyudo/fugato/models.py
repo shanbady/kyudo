@@ -128,6 +128,12 @@ class Answer(TimeStampedModel):
         db_table = "answers"
         get_latest_by = 'created'
 
+    def get_api_detail_url(self):
+        """
+        Returns the API detail endpoint for the object
+        """
+        return reverse('api:answer-detail', args=(self.pk,))
+
     def __unicode__(self):
         return self.text
 
@@ -224,7 +230,7 @@ def send_answered_activity_signal(sender, instance, created, **kwargs):
     Sends the "answered" activity to the stream on Question create
     """
     if created:
-        joined = {
+        activity = {
             'sender':    sender,
             'actor':     instance.author,
             'verb':      'answer',
@@ -232,4 +238,4 @@ def send_answered_activity_signal(sender, instance, created, **kwargs):
             'target':    instance.question,
             'timestamp': instance.created,
         }
-        stream.send(**joined)
+        stream.send(**activity)
