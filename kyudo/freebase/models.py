@@ -20,9 +20,12 @@ Models for storing RDF Topics
 from django.db import models
 from jsonfield import JSONField
 from kyudo.utils import nullable
+from stream.signals import stream
+from django.dispatch import receiver
 from django.core.urlresolvers import reverse
 from freebase.managers import TopicManager
 from model_utils.models import TimeStampedModel
+from django.db.models.signals import post_save
 
 ##########################################################################
 ## Models
@@ -82,3 +85,22 @@ class TopicAnnotation(TimeStampedModel):
             return unicode(self.topic)
         else:
             return self.text
+
+##########################################################################
+## Signals
+##########################################################################
+
+@receiver(post_save, sender=TopicAnnotation)
+def send_annotation_activity_signal(sender, instance, created, **kwargs):
+    """
+    Sends the "annotated" activity to the stream on Annotation create or update
+    """
+    activity = {
+        'sender':    sender,
+        'actor':     instance.user,
+        'verb':      'annotate',
+        'target':    instance.question,
+        'theme':     instance.topic,
+        'timestamp': instance.created,
+    }
+    stream.send(**activity)
