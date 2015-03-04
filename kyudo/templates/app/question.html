@@ -169,13 +169,13 @@
               <div class="answer-actions">
                 {% current_user_vote answer as voted %}
 
-                <button class="btn btn-danger btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
                         type="button" data-vote="1" data-candidate="{{ answer.get_api_detail_url }}">
                   <i class="fa fa-thumbs-up"></i> |
                   <span class="vote-count">{{ answer.votes.upvotes.count }}</span>
                 </button>
 
-                <button class="btn btn-danger btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
                         type="button" data-vote="-1" data-candidate="{{ answer.get_api_detail_url }}">
                   <i class="fa fa-thumbs-down"></i> |
                   <span class="vote-count">{{ answer.votes.downvotes.count }}</span>
@@ -506,14 +506,14 @@
             e.preventDefault();
 
             var target = $(this);
-            var data = target.data();
+            var data   = target.data();
             var vote_endpoint = data.candidate + "vote/";
-
+            var parent = target.parent();
 
             $.post(vote_endpoint, data, function(result) {
 
               // Update the buttons according to the response
-              $.each($(".question-actions button.btn-vote"), function(idx, obj) {
+              $.each(parent.find("button.btn-vote"), function(idx, obj) {
                 obj  = $(obj);
                 data = obj.data();
 

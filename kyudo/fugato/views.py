@@ -125,21 +125,24 @@ class AnswerViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
+        """
+        Note that the upvotes and downvotes keys are required by the front-end
+        """
         answer   = self.get_object()
         serializer = VotingSerializer(data=request.DATA, context={'request': request})
         if serializer.is_valid():
 
             kwargs = {
-                'answer': answer,
+                'content': answer,
                 'user': request.user,
-                'defaults': {
-                    'vote': serializer.data['vote'],
-                }
+                'vote': serializer.validated_data['vote'],
             }
 
-            _, created = AnswerVote.objects.update_or_create(**kwargs)
+            _, created = Vote.objects.punch_ballot(**kwargs)
             response = serializer.data
-            response.update({'status': 'vote recorded', 'created': created})
+            response.update({'status': 'vote recorded', 'created': created,
+                             'upvotes': answer.votes.upvotes().count(),
+                             'downvotes': answer.votes.downvotes().count()})
             return Response(response)
         else:
             return Response(serializer.errors,
