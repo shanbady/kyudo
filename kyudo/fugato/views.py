@@ -21,6 +21,7 @@ from fugato.models import *
 from voting.models import Vote
 from fugato.serializers import *
 from voting.serializers import *
+from freebase.serializers import *
 from django.views.generic import DetailView
 from rest_framework import viewsets
 from users.permissions import IsAuthorOrReadOnly

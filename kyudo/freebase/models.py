@@ -20,6 +20,7 @@ Models for storing RDF Topics
 from django.db import models
 from jsonfield import JSONField
 from kyudo.utils import nullable
+from django.core.urlresolvers import reverse
 from freebase.managers import TopicManager
 from model_utils.models import TimeStampedModel
 
@@ -69,6 +70,12 @@ class TopicAnnotation(TimeStampedModel):
         Decides if the annotation is ambiguous or not
         """
         return self.topic is None
+
+    def get_api_detail_url(self):
+        """
+        Returns the API detail endpoint for the object
+        """
+        return reverse('api:annotation-detail', args=(self.pk,))
 
     def __unicode__(self):
         if self.topic:
