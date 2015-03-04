@@ -1,11 +1,48 @@
+# freebase.views
+# Views for the Freebase Application
+#
+# Author:   Benjamin Bengfort <bengfort@cs.umd.edu>
+# Created:  Thu Jan 04 18:53:21 2015 -0500
+#
+# Copyright (C) 2015 University of Maryland
+# For license information, see LICENSE.txt
+#
+# ID: views.py [] bengfort@cs.umd.edu $
+
+"""
+Views for the Freebase Application
+"""
+
+##########################################################################
+## Imports
+##########################################################################
+
 import time
 
 from django.http import Http404
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from freebase.models import *
+from freebase.serializers import *
 from freebase.api import search, topic, summarize
 from freebase.nlp import entities, parse, extract_noun_phrases
+
+##########################################################################
+## API Views
+##########################################################################
+
+class TopicAnnotationViewSet(viewsets.ModelViewSet):
+    """
+    The standard viewset for the TopicAnnotation model.
+    """
+
+    queryset = TopicAnnotation.objects.order_by('-modified')
+    serializer_class   = TopicAnnotationSerializer
+
+##########################################################################
+## Computed API ViewSets
+##########################################################################
 
 class ParserViewSet(viewsets.ViewSet):
     """
