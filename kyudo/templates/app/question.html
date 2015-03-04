@@ -30,22 +30,19 @@
           <h5>Concepts</h5>
           <ul class="list-unstyled">
             {% for annotation in question.annotations.all %}
-            {% if annotation.is_ambiguous %}
             <li>
-              <a class="topic-annotation ambiguous" href="{{ annotation.get_api_detail_url }}"
+              <a class="topic-annotation{% if annotation.is_ambiguous %} ambiguous{% endif %}"
+                  href="{{ annotation.get_api_detail_url }}" id="concept{{ forloop.counter }}"
                   data-annotation-id="{{ annotation.id }}" data-text="{{ annotation.text }}"
                   data-user="{{ annotation.user_id }}" data-question="{{ annotation.question_id }}">
+                {% if annotation.is_ambiguous %}
                 <i class="fa fa-question"></i>
                 {{ annotation.text }}
+                {% else %}
+                {{ annotation.topic }}
+                {% endif %}
               </a>
             </li>
-            {% else %}
-            <li>
-              <a class="topic-annotation" href="{{ annotation.get_api_detail_url }}">
-                {{ annotation.topic }}
-              </a>
-              </li>
-            {% endif %}
             {% empty %}
             <li>No extracted concepts</li>
             {% endfor %}
@@ -187,6 +184,7 @@
                   <div class="col-sm-10">
                     <p id="pTopicText" class="form-control-static"></p>
                     <span class="help-block form-error" id="topicFormError"></span>
+                    <input type="hidden" id="topicAnnotationTopic" name="topic" value="" />
                   </div>
                 </div>
                 <div class="form-group">
@@ -197,8 +195,14 @@
                     <span class="help-block form-error" id="textFormError"></span>
                   </div>
                 </div>
-                <input type="hidden" id="topicAnnotationQuestion" name="question" value="{{ question.id }}" />
-                <input type="hidden" id="topicAnnotationTopic" name="topic" value="" />
+                <div class="form-group">
+                  <label class="control-label col-sm-2"><strong>Topic</strong></label>
+                  <div class="col-sm-10">
+                    <p id="pQuestionText" class="form-control-static">{{ question.text }}</p>
+                    <span class="help-block form-error" id="questionFormError"></span>
+                    <input type="hidden" id="topicAnnotationQuestion" name="question" value="{{ question.get_api_detail_url }}" />
+                  </div>
+                </div>
                 </fieldset>
               </form>
             </div>
@@ -448,7 +452,10 @@
           var btnEditTopicSubmit   = $("#btnEditTopicSubmit");
           var btnEditTopicBack     = $("#btnEditTopicBack");
 
+          // Holds the id of the concept being processed
+          var currentTopic         = "";
 
+          // Templates
           var topicTmpl = _.template($("#topicItemTemplate").html());
 
           // Handle the topic detail modal
@@ -456,8 +463,9 @@
             // Stop the link click
             e.preventDefault();
 
-            var target = $(this);
-            var data   = target.data();
+            var target   = $(this);
+            var data     = target.data();
+            currentTopic = target.attr('id');
 
             // Set the state of the forms in the dialog
             topicSearchQuery.val(data.text);
@@ -510,7 +518,19 @@
               'url':     action,
               'data':    formData,
             }).done(function(data) {
-              console.log(data);
+
+              // Update the current topic
+              if (currentTopic != "") {
+                $("#" + currentTopic)
+                  .text(data.topic)
+                  .removeClass('ambiguous');
+              } else {
+                console.log("ERROR -- no currentTopic is set! Can't update topic list!");
+              }
+
+              // Close the form and therefore reset all the fields
+              editTopicModal.modal('hide');
+
             }).fail(function(jqxhr, status, error) {
 
               // Reset the form state
@@ -614,6 +634,9 @@
             toggleTopicBtnState('search');
             hide(topicAnnotation);
             show(topicSearch);
+
+            // Forget the current topic
+            currentTopic = "";
           }
 
           // Toggle topic form button states
