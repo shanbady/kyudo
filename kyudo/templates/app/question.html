@@ -59,11 +59,14 @@
 
         <!-- Middle Column -->
         <div class="col-md-8">
+
+          <!-- question header -->
           <h2 id="questionText">{{ question.text }}</h2>
           <p class="text-muted">
             <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
           </p>
 
+          <!-- question actions -->
           <div class="question-actions">
             {% current_user_vote question as voted %}
 
@@ -91,12 +94,14 @@
             <div class="clearfix"></div>
           </div>
 
+          <!-- question details -->
           <div class="question-details">
             {% if question.details %}
             {{ question.details_rendered|safe }}
             {% endif %}
           </div>
 
+          <!-- question details form -->
           <div class="question-details-form">
             <form role="form" id="formQuestionDetails" class="hidden">
               <div class="form-group">
@@ -111,6 +116,9 @@
             </form>
           </div>
 
+          <!-- answers list -->
+
+          <!-- scientific details -->
           <hr />
           <pre>{{ question.parse }}</pre>
           <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
@@ -199,7 +207,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="control-label col-sm-2"><strong>Topic</strong></label>
+                  <label class="control-label col-sm-2"><strong>Question</strong></label>
                   <div class="col-sm-10">
                     <p id="pQuestionText" class="form-control-static">{{ question.text }}</p>
                     <span class="help-block form-error" id="questionFormError"></span>
@@ -462,6 +470,7 @@
 
           // Holds the id of the concept being processed
           var currentTopic         = "";
+          var addTopicId           = "aNewTopic";
 
           // Templates
           var topicTmpl = _.template($("#topicItemTemplate").html());
@@ -482,7 +491,7 @@
             topicAnnotationText.val(data.text);
             topicAnnotationForm.attr('action', target.attr('href'));
 
-            if (!target.hasClass('ambiguous')) {
+            if (!target.hasClass('ambiguous') && !(currentTopic == addTopicId)) {
               // If this is an unambiguous query - show the detail
               setStaticTopic(data.topicMid, data.topicTitle, data.topicNotable);
 
@@ -539,7 +548,7 @@
             }).done(function(data) {
 
               // Update the current topic
-              if (currentTopic == "aNewTopic") {
+              if (currentTopic == addTopicId) {
                 // Add topic item
                 $("ul#conceptList")
                   .append(
