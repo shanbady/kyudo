@@ -70,9 +70,25 @@ class FreebaseAPIViewsTests(TestCase):
         """
         pass
 
+class FreebaseModelTests(TestCase):
+
     @skip("pending implementation")
     def test_topic_annotation_activity_stream(self):
         """
         Test that annotation causes an activity stream item
+        """
+        pass
+
+    @skip("pending implementation")
+    def test_ta_activity_stream_from_parse(self):
+        """
+        Assert no stream item is created when a user isn't involved
+        """
+        pass
+
+    @skip("pending implementation")
+    def test_ta_stream_null_topic(self):
+        """
+        Assert an activity stream is created even on no topic
         """
         pass

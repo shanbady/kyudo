@@ -95,12 +95,22 @@ def send_annotation_activity_signal(sender, instance, created, **kwargs):
     """
     Sends the "annotated" activity to the stream on Annotation create or update
     """
+
+    # If no user, this is a parse annotation
+    if instance.user is None:
+        return
+
     activity = {
         'sender':    sender,
         'actor':     instance.user,
         'verb':      'annotate',
         'target':    instance.question,
-        'theme':     instance.topic,
-        'timestamp': instance.created,
+
+        'timestamp': instance.modified,
     }
+
+    # Topic can be null
+    if instance.topic:
+        activity['theme'] = instance.topic
+
     stream.send(**activity)
