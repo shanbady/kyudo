@@ -28,7 +28,7 @@
         <!-- Left Column -->
         <div class="col-md-2 question-sidebar">
           <h5>Concepts</h5>
-          <ul class="list-unstyled">
+          <ul id="conceptList" class="list-unstyled">
             {% for annotation in question.annotations.all %}
             <li>
               <a class="topic-annotation{% if annotation.is_ambiguous %} ambiguous{% endif %}"
@@ -48,7 +48,8 @@
             {% endfor %}
           </ul>
 
-          <a class="topic-annotation btn btn-xs btn-primary" href="{% url 'api:annotation-list' %}">
+          <a id="aNewTopic" class="topic-annotation btn btn-xs btn-primary"
+             href="{% url 'api:annotation-list' %}">
             <i class="fa fa-plus-circle"></i>
             add topic
           </a>
@@ -459,7 +460,9 @@
           var topicTmpl = _.template($("#topicItemTemplate").html());
 
           // Handle the topic detail modal
-          $(".topic-annotation").click(function(e) {
+          $(".topic-annotation").click(onTopicAnnotationClick);
+
+          function onTopicAnnotationClick(e) {
             // Stop the link click
             e.preventDefault();
 
@@ -481,7 +484,7 @@
             // Show the modal and return
             editTopicModal.modal('show');
             return false;
-          });
+          }
 
           // Handle the search form submission
           topicSearchForm.submit(function(e) {
@@ -513,19 +516,30 @@
             btnEditTopicBack.attr('disabled', 'disabled');
             btnEditTopicSubmit.attr('disabled', 'disabled');
 
+            var method = "PUT";
+            if (action == "{% url 'api:annotation-list' %}") {
+              method = "POST";
+            }
+
             $.ajax({
-              'method':  'PUT',
+              'method':  method,
               'url':     action,
               'data':    formData,
             }).done(function(data) {
 
               // Update the current topic
-              if (currentTopic != "") {
-                $("#" + currentTopic)
-                  .text(data.topic)
-                  .removeClass('ambiguous');
+              if (currentTopic == "aNewTopic") {
+                // Add topic item
+                $("ul#conceptList")
+                  .append(
+                    $("<li></li>")
+                      .text(data.topic)
+                  );
               } else {
-                console.log("ERROR -- no currentTopic is set! Can't update topic list!");
+                // Update topic item
+                $("#" + currentTopic)
+                    .text(data.topic)
+                    .removeClass('ambiguous');
               }
 
               // Close the form and therefore reset all the fields
