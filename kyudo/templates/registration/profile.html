@@ -75,6 +75,58 @@
       <!-- Main Profile Area -->
       <div id="profile-content" class="col-sm-9">
 
+        <!-- Profile Tab Navigation -->
+        <div>
+
+          <!-- edit profile button -->
+          <button id="btnEditProfile" class="btn btn-default btn-sm pull-right"
+              disabled="disabled" data-toggle="modal" data-target="#editProfileForm">
+            <i class="fa fa-pencil"></i> Edit Profile
+          </button>
+
+          <ul class="nav nav-tabs">
+            <li class="active">
+              <a href="#activity" data-toggle="tab">
+                <i class="fa fa-rss"></i> Activity
+              </a>
+            </li>
+          </ul>
+
+          <div class="clearfix"></div>
+        </div>
+        <!-- end profile tabs -->
+
+        <div class="tab-content">
+          <div id="activity" class="tab-pane active">
+
+            <!-- Activity Log -->
+            <ul class="list-unstyled activity-stream">
+            {% for activity in activity_stream %}
+              <li class="stream-item">
+                <span class="text-muted"><small>{{ activity.timesince }} ago</small></span><br />
+                {% autoescape off %}
+                {% if activity.target %}
+                  {% if activity.theme %}
+                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }} on {{ activity.get_target_html }}
+                  {% else %}
+                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_target_html }}
+                  {% endif %}
+
+                {% elif activity.theme %}
+                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }}
+                {% else %}
+                  {{ activity.get_actor_html }} {{ activity.get_verb_display }}
+                {% endif %}
+                {% endautoescape %}
+              </li>
+            {% empty %}
+              <li>No activities recorded yet</li>
+            {% endfor %}
+            </ul>
+            <!-- end activity log -->
+
+          </div><!-- activity panel ends -->
+
       </div><!-- main profile area ends -->
     </div>
   </div>
@@ -141,7 +193,7 @@
 
         </div> <!-- .modal-content -->
       </div> <!-- .modal-dialog -->
-    </div> <!-- .modal -->
+  </div> <!-- .modal -->
 {% endblock %}
 
 {% block javascripts %}
