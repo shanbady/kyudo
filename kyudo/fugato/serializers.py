@@ -20,6 +20,7 @@ JSON Serializers for the Fugato app
 from fugato.models import *
 from fugato.exceptions import *
 from rest_framework import serializers
+from rest_framework import pagination
 
 ##########################################################################
 ## Question Serializers
@@ -118,10 +119,25 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     Serializes the Answer object for use in the API.
     """
 
+    author   = serializers.HyperlinkedRelatedField(
+                default=serializers.CurrentUserDefault(),
+                read_only=True,
+                view_name="api:user-detail",
+               )
+
     class Meta:
         model  = Answer
-        fields = ('url', 'text', 'author', 'question', 'created', 'modified')
-        read_only_fields = ('author',)
+        fields = ('url', 'text', 'text_rendered', 'author', 'question', 'created', 'modified')
+        read_only_fields = ('text_rendered', 'author')
         extra_kwargs = {
-            'url': {'view_name': 'api:answer-detail',}
+            'url': {'view_name': 'api:answer-detail',},
+            'question': {'view_name': 'api:question-detail',}
         }
+
+class PaginatedAnswerSerializer(pagination.PaginationSerializer):
+    """
+    Paginates the AnswerSerializer
+    """
+
+    class Meta:
+        object_serializer_class = AnswerSerializer

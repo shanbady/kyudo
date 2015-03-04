@@ -106,6 +106,18 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    @detail_route(methods=['get'], permission_classes=[IsAuthenticated])
+    def answers(self, request, pk=None):
+        """
+        Returns a list of all answers associated with the question
+        """
+        question   = self.get_object()
+        answers    = question.answers.order_by('created') # TODO: order by vote count
+        page       = self.paginate_queryset(answers)
+        serializer = PaginatedAnswerSerializer(page, context={'request': request})
+
+        return Response(serializer.data)
+
 class AnswerViewSet(viewsets.ModelViewSet):
 
     queryset = Answer.objects.order_by('-created')
