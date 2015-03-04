@@ -193,12 +193,14 @@
           <div id="writeAnswer">
             <div class="question-details-form">
               <h4>Compose an answer</h4>
-              <form role="form" id="answerForm" class="">
+              <form role="form" id="answerForm" class="" action="{% url 'api:answer-list' %}" method="POST">
                 <div class="form-group">
                   <textarea id="answerText" name="text" class="form-control" rows="8"></textarea>
                   <span class="help-block pull-left">Edit Answer in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
+                  <span class="help-block pull-left" id="textFormError"></span>
                 </div>
                 <div class="pull-right">
+                  <input type="hidden" id="answerQuestion" name="question" class="form-control" value="{{ question.get_api_detail_url }}" />
                   <button id="submitAnswer" type="submit" class="btn btn-primary btn-sm">
                     Post your Answer
                   </button>
@@ -340,6 +342,7 @@
   {% endblock %}
 
   {% block javascripts %}
+    <script type="text/javascript" src="{% static 'js/libs/moment.js' %}"></script>
     {{ block.super }}
 
     <script type="text/template" class="template" id="parseAnnotationTemplate">
@@ -366,6 +369,37 @@
         </a>
         <small class="text-muted"><%= notable %></small>
       </li>
+    </script>
+
+    <script type="text/template" class="template" id="answerTemplate">
+      <div class="answer">
+        <!-- answer info (author, date) -->
+        <div class="answer-info">
+          <img title="<%= author %>" src="<%= gravatar %>" />
+          <p>answered by <strong><%= author %></strong></p>
+          <p class="text-muted"><small>answered on <%= created %></small></p>
+        </div>
+
+        <!-- answer text -->
+        <div class="answer-text">
+          <%= text_rendered %>
+        </div>
+
+        <!-- answer actions (vote, comment) -->
+        <div class="answer-actions">
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-up"></i> |
+            <span class="vote-count">0</span>
+          </button>
+
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="-1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-down"></i> |
+            <span class="vote-count">0</span>
+          </button>
+        </div>
+      </div>
     </script>
 
     <script type="text/javascript">
@@ -457,6 +491,77 @@
           });
 
           ////////////////////////////////////////////////////////////////
+          /// Write or Update answers
+          ////////////////////////////////////////////////////////////////
+
+          var createAnswerEndpoint = "{% url 'api:answer-list' %}";
+          var answerTmpl = _.template($("#answerTemplate").html());
+
+          // Handle answer form submit
+          $("#answerForm").submit(function(e) {
+            e.preventDefault();
+
+            // Set form state
+            var form = $(this);
+            form.find("button").attr('disabled', 'disabled');
+
+            // Collect data from form
+            var formData = getFormData(form);
+
+            // Select endpoint (important for when we update answers)
+            var endpoint = form.attr("action");
+            var method   = form.attr("method");
+
+            // Send the data to the endpoint
+            $.ajax({
+              url: endpoint,
+              method: method,
+              data: formData
+            }).done(function(data) {
+
+              console.log(data);
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+              form.find("textarea").val("");
+
+              // Append the answer (in the future, update answer)
+              var full_name = data.author.first_name + " " + data.author.last_name;
+              full_name     = full_name.trim();
+
+              var answer    = $(answerTmpl({
+                  author: full_name ? full_name : data.author.username,
+                  gravatar: data.author.profile.gravatar,
+                  text_rendered: data.text_rendered,
+                  url: data.url,
+                  created: moment(data.created).format("MMMM D, YYYY")
+                }));
+              answer.find('button.btn-vote').click(onVote)
+              $("#answerList").append(answer);
+
+            }).fail(function(jqxhr, status, error) {
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+
+              // Set error state
+              form.addClass('has-error');
+
+              $.each(jqxhr.responseJSON, function(field, errors) {
+                block = $("span#" + field + "FormError");
+                if (block) {
+                  block.text(errors[0]);
+                }
+              });
+
+              console.log(jqxhr.responseJSON);
+              console.log(error);
+            });
+
+
+
+            return false;
+          });
+
+          ////////////////////////////////////////////////////////////////
           /// Parse Annotation
           ////////////////////////////////////////////////////////////////
 
@@ -502,7 +607,9 @@
           ////////////////////////////////////////////////////////////////
 
           // Handle the question voting buttons
-          $("button.btn-vote").click(function(e) {
+          $("button.btn-vote").click(onVote);
+
+          function onVote(e) {
             e.preventDefault();
 
             var target = $(this);
@@ -540,7 +647,7 @@
 
             return false;
 
-          })
+          }
 
           ////////////////////////////////////////////////////////////////
           /// Topic Annotation
@@ -618,12 +725,7 @@
 
             // Get information to POST
             var action   = topicAnnotationForm.attr('action');
-            var formData = _.object(topicAnnotationForm
-                                      .serializeArray()
-                                      .map(function(v) {
-                                              return [v.name, v.value];
-                                            })
-                                    );
+            var formData = getFormData(topicAnnotationForm);
 
             // Disable form (after getting form data -- required)
             topicAnnotationText.attr('disabled', 'disabled');
@@ -809,6 +911,12 @@
           // Helper function to show elements
           function show(elem) {
             elem.addClass("show").removeClass("hidden");
+          }
+
+          // Helper function to collect form data
+          function getFormData(form) {
+            var data = form.serializeArray();
+            return _.object(data.map(function(v) { return [v.name, v.value]; }));
           }
 
         });

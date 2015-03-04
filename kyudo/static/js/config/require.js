@@ -19,7 +19,8 @@ requirejs.config({
     'jquery': 'libs/jquery',
     'bootstrap': 'libs/bootstrap',
     'backbone': 'libs/backbone',
-    'text': 'libs/require-text'
+    'text': 'libs/require-text',
+    'moment': 'libs/moment'
   },
   shim: {
     'underscore': {
