@@ -34,7 +34,9 @@
               <a class="topic-annotation{% if annotation.is_ambiguous %} ambiguous{% endif %}"
                   href="{{ annotation.get_api_detail_url }}" id="concept{{ forloop.counter }}"
                   data-annotation-id="{{ annotation.id }}" data-text="{{ annotation.text }}"
-                  data-user="{{ annotation.user_id }}" data-question="{{ annotation.question_id }}">
+                  data-user="{{ annotation.user_id }}" data-question="{{ annotation.question_id }}"
+                  data-topic-mid="{{ annotation.topic.mid }}" data-topic-title="{{ annotation.topic.title }}"
+                  data-topic-notable="{{ annotation.topic.notability }}">
                 {% if annotation.is_ambiguous %}
                 <i class="fa fa-question"></i>
                 {{ annotation.text }}
@@ -216,9 +218,13 @@
                     class="btn btn-primary btn-sm pull-left" form="topicSearchForm">
               <i class="fa fa-search"></i> Search
             </button>
+            <button id="btnDeleteAnnotation" type="button"
+                    class="btn btn-danger btn-sm invisible">
+              <i class="fa fa-trash"></i> Delete
+            </button>
             <button id="btnEditTopicBack" type="button"
                     class="btn btn-default btn-sm invisible">
-              <i class="fa fa-arrow-circle-left"></i> Back
+              <i class="fa fa-arrow-circle-left"></i> Search
             </button>
             <button id="btnEditTopicSubmit" type="submit"
                     class="btn btn-primary btn-sm invisible" form="topicAnnotationForm">
@@ -452,6 +458,7 @@
           var btnEditTopicSearch   = $("#btnEditTopicSearch");
           var btnEditTopicSubmit   = $("#btnEditTopicSubmit");
           var btnEditTopicBack     = $("#btnEditTopicBack");
+          var btnDeleteAnnotation  = $("#btnDeleteAnnotation");
 
           // Holds the id of the concept being processed
           var currentTopic         = "";
@@ -475,11 +482,15 @@
             topicAnnotationText.val(data.text);
             topicAnnotationForm.attr('action', target.attr('href'));
 
-            // If this is an unambiguous query - show the detail
+            if (!target.hasClass('ambiguous')) {
+              // If this is an unambiguous query - show the detail
+              setStaticTopic(data.topicMid, data.topicTitle, data.topicNotable);
 
-            // Otherwise show the search form
-
-
+              // Change state to the topic annotation form
+              toggleTopicBtnState('annotate');
+              hide(topicSearch);
+              show(topicAnnotation);
+            }
 
             // Show the modal and return
             editTopicModal.modal('show');
@@ -598,9 +609,7 @@
             e.preventDefault();
 
             var data = $(e.target).data();
-            var topicHtml = "<span class=\"text-primary\">" + data.title + "</span> <small>" + data.notable + "</small>";
-            $("#pTopicText").html(topicHtml);
-            topicAnnotationTopic.val(data.mid);
+            setStaticTopic(data.mid, data.title, data.notable)
 
             // Change state to the topic annotation form
             toggleTopicBtnState('annotate');
@@ -621,10 +630,25 @@
             $("span.form-error").text("");
           });
 
+          // btnDeleteAnnotation click handler
+          btnDeleteAnnotation.click(function(e) {
+            if (window.confirm("Are you sure?")) {
+              console.log("not implemented yet");
+              editTopicModal.modal('hide');
+            }
+          });
+
           // Reset the modal on close
           editTopicModal.on('hidden.bs.modal', function (e) {
             resetTopicModal();
           });
+
+          // Set the topic identifier in the detail form
+          function setStaticTopic(mid, title, notable) {
+            var topicHtml = "<span class=\"text-primary\">" + title + "</span> <small>" + notable + "</small>";
+            $("#pTopicText").html(topicHtml);
+            topicAnnotationTopic.val(mid);
+          }
 
           // Reset the topic annotation form
           function resetTopicModal() {
@@ -662,11 +686,13 @@
               btnEditTopicSearch.removeClass('invisible');
               btnEditTopicSubmit.addClass('invisible');
               btnEditTopicBack.addClass('invisible');
+              // btnDeleteAnnotation.addClass('invisible');
             } else if (action == 'annotate') {
               // Set button state to annotate mode
               btnEditTopicSearch.addClass('invisible');
               btnEditTopicSubmit.removeClass('invisible');
               btnEditTopicBack.removeClass('invisible');
+              // btnDeleteAnnotation.removeClass('invisible');
             } else {
               console.log("ERROR! Unknown topic button state \"" + action + "\"!");
             }
