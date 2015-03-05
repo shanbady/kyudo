@@ -21,7 +21,9 @@ import kyudo
 
 from kyudo.utils import *
 from unittest import TestCase
-# from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APITestCase
+from django.core.urlresolvers import reverse
 
 ##########################################################################
 ## Module variables
@@ -101,3 +103,53 @@ class UtilsTests(TestCase):
         self.assertEqual(htmlize("http://www.google.com/"), '<p><a href="http://www.google.com/" rel="nofollow">http://www.google.com/</a></p>', "linkify didn't work")
         self.assertNotIn("<script>", htmlize("<script>alert('bad');</script>"), "clean didn't work")
         self.assertIn("<ul>", htmlize("- item 1\n- item 2\n"), "markdown didn't work")
+
+##########################################################################
+## API Tests
+##########################################################################
+
+class APITests(APITestCase):
+    """
+    Check the default APIs like the heartbeat endpoint
+    """
+
+    def setUp(self):
+        self.endpoint = url = reverse('api:status-list')
+
+    def test_heartbeat_no_auth(self):
+        """
+        Assert that the heartbeat endpoint requires no auth
+        """
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_heartbeat_get_only(self):
+        """
+        Assert that the heartbeat endpoint is GET only
+        """
+        data = {"name": "Rebbecca", "color": "red"}
+
+        # Test POST
+        response = self.client.post(self.endpoint, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Test PUT
+        response = self.client.put(self.endpoint, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Test DELETE
+        response = self.client.delete(self.endpoint)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_heartbeat(self):
+        """
+        Check the heartbeat endpoint for content
+        """
+        expected = {'status': 'ok', 'version': EXPECTED_VERSION}
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertIn('timestamp', response.data)
+        ts = response.data.pop('timestamp')
+        self.assertEqual(expected, response.data)
+
