@@ -20,6 +20,8 @@ JSON Serializers for the Fugato app
 from fugato.models import *
 from fugato.exceptions import *
 from users.serializers import *
+
+from kyudo.utils import signature
 from rest_framework import serializers
 from rest_framework import pagination
 

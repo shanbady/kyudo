@@ -18,15 +18,11 @@ Contains additional User profile data but no authentication
 ##########################################################################
 
 import urllib
-import hashlib
 
 from django.db import models
 from kyudo.utils import nullable
 from freebase.models import Topic
-from stream.signals import stream
-from django.dispatch import receiver
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 
 ##########################################################################
@@ -80,36 +76,3 @@ class Profile(models.Model):
 
     def __unicode__(self):
         return self.full_email
-
-##########################################################################
-## Signals
-##########################################################################
-
-@receiver(post_save, sender=User)
-def update_user_profile(sender, instance, created, **kwargs):
-    """
-    Creates a Profile object for the user if it doesn't exist, or updates
-    it with new information from the User (e.g. the gravatar).
-    """
-    ## Compute the email hash
-    digest = hashlib.md5(instance.email.lower()).hexdigest()
-
-    if created:
-        Profile.objects.create(user=instance, email_hash=digest)
-    else:
-        instance.profile.email_hash = digest
-        instance.profile.save()
-
-@receiver(post_save, sender=User)
-def send_joined_activity_signal(sender, instance, created, **kwargs):
-    """
-    Sends the "joined" activity to the stream on create
-    """
-    if created:
-        joined = {
-            'sender':    sender,
-            'actor':     instance,
-            'verb':      'join',
-            'timestamp': instance.date_joined,
-        }
-        stream.send(**joined)

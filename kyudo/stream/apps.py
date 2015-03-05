@@ -1,24 +1,28 @@
-# users
-# Application for user profiles
+# stream.apps
+# Describes the Stream application for Django
 #
 # Author:   Benjamin Bengfort <bengfort@cs.umd.edu>
-# Created:  Wed Mar 04 23:28:21 2015 -0500
+# Created:  Wed Mar 04 23:25:07 2015 -0500
 #
 # Copyright (C) 2015 University of Maryland
 # For license information, see LICENSE.txt
 #
-# ID: __init__.py [] bengfort@cs.umd.edu $
+# ID: apps.py [] bengfort@cs.umd.edu $
 
 """
-Application for user profiles (extend django.contrib.auth)
+Describes the Stream application for Django
 """
 
 ##########################################################################
 ## Imports
 ##########################################################################
 
+from django.apps import AppConfig
+
 ##########################################################################
-## Configuration
+## Freebase Config
 ##########################################################################
 
-default_app_config = 'users.apps.UsersConfig'
+class StreamConfig(AppConfig):
+    name = 'stream'
+    verbose_name = "Activity Stream"

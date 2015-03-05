@@ -1,24 +1,31 @@
-# users
-# Application for user profiles
+# voting.apps
+# Describes the Voting application for Django
 #
 # Author:   Benjamin Bengfort <bengfort@cs.umd.edu>
-# Created:  Wed Mar 04 23:28:21 2015 -0500
+# Created:  Wed Mar 04 23:34:16 2015 -0500
 #
 # Copyright (C) 2015 University of Maryland
 # For license information, see LICENSE.txt
 #
-# ID: __init__.py [] bengfort@cs.umd.edu $
+# ID: apps.py [] bengfort@cs.umd.edu $
 
 """
-Application for user profiles (extend django.contrib.auth)
+Describes the Voting application for Django
 """
 
 ##########################################################################
 ## Imports
 ##########################################################################
 
+from django.apps import AppConfig
+
 ##########################################################################
-## Configuration
+## Voting Config
 ##########################################################################
 
-default_app_config = 'users.apps.UsersConfig'
+class VotingConfig(AppConfig):
+    name = 'voting'
+    verbose_name = "Voting"
+
+    def ready(self):
+        import voting.signals
