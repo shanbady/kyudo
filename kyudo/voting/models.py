@@ -22,11 +22,7 @@ from model_utils import Choices
 from model_utils.models import TimeStampedModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.dispatch import receiver
-from django.db.models.signals import post_save
 from voting.managers import VotingManager
-
-from stream.signals import stream
 
 ##########################################################################
 ## Models
@@ -66,34 +62,3 @@ class Vote(TimeStampedModel):
         verbose_name  = "vote"
         verbose_name_plural = "votes"
         unique_together = ('object_id', 'user', 'content_type')
-
-##########################################################################
-## Signals
-##########################################################################
-
-@receiver(post_save, sender=Vote)
-def send_voted_activity_signal(sender, instance, created, **kwargs):
-    """
-    Sends the "voted" activity to the stream on up/down vote
-
-    Decisions:
-        1. The vote object isn't included in the stream
-        2. Activities are recorded even when votes are changed
-        3. The target of the vote verb is the content_object
-    """
-    vote_verb = {
-         1: 'upvote',
-        -1: 'downvote',
-         0:  None
-    }[instance.vote]
-
-    if vote_verb is None:
-        return
-
-    voted = {
-        'sender':    sender,
-        'actor':     instance.user,
-        'verb':      vote_verb,
-        'target':    instance.content_object,
-    }
-    stream.send(**voted)
