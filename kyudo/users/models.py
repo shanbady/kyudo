@@ -29,19 +29,23 @@ from django.core.urlresolvers import reverse
 ## UserProfile model
 ##########################################################################
 
+
 class Profile(models.Model):
 
-    user       = models.OneToOneField( User, editable=False )
-    email_hash = models.CharField( max_length=32, editable=False )
-    biography  = models.CharField( max_length=255, **nullable )
-    location   = models.ForeignKey( 'freebase.Topic', related_name="+", **nullable )
+    user         = models.OneToOneField(User, editable=False)
+    email_hash   = models.CharField(max_length=32, editable=False)
+    biography    = models.CharField(max_length=255, **nullable)
+    organization = models.CharField(max_length=255, **nullable)
+    location     = models.ForeignKey('freebase.Topic', related_name="+",
+                                     **nullable)
 
     def get_gravatar_url(self, size=200, default="mm"):
         """
         Computes the gravatar url from an email address
         """
         params = urllib.urlencode({'d': default, 's': str(size)})
-        grvurl = "http://www.gravatar.com/avatar/%s?%s" % (self.email_hash, params)
+        grvurl = "http://www.gravatar.com/avatar/%s?%s" % (self.email_hash,
+                                                           params)
         return grvurl
 
     @property

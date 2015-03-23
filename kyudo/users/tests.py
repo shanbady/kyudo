@@ -19,10 +19,13 @@ Tests for the users app
 
 import hashlib
 
+from unittest import skip
 from users.models import Profile
 from stream.signals import stream
+from rest_framework import status
 from stream.models import StreamItem
 from django.test import TestCase, Client
+from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
@@ -42,12 +45,22 @@ fixtures = {
         'last_name': 'Doe',
         'email': 'jdoe@example.com',
         'password': 'supersecret',
+    },
+    'api_user': {
+        'username': 'starbucks',
+        'first_name': 'Jane',
+        'last_name': 'Windemere',
+        'profile': {
+            'biography': 'Originally from Seattle, now lives in Portland',
+            'organization': 'SETI'
+        }
     }
 }
 
 ##########################################################################
 ## Model Tests
 ##########################################################################
+
 
 class UserModelTest(TestCase):
 
@@ -57,19 +70,25 @@ class UserModelTest(TestCase):
         """
         handler = MagicMock()
         stream.connect(handler)
-        user = User.objects.create_user(username='bob', email='bob@example.com', password='secret')
+        user = User.objects.create_user(username='bob',
+                                        email='bob@example.com',
+                                        password='secret')
 
         # Ensure that the signal was sent once with required arguments
         handler.assert_called_once_with(verb='join', sender=User, actor=user,
-            timestamp=user.date_joined, signal=stream)
+                                        timestamp=user.date_joined,
+                                        signal=stream)
 
     def test_user_joined_activity(self):
         """
         Assert that when a user joins, there is an activity stream item
         """
-        user  = User.objects.create_user(username='bob', email='bob@example.com', password='secret')
+        user  = User.objects.create_user(username='bob',
+                                         email='bob@example.com',
+                                         password='secret')
         query = StreamItem.objects.filter(verb='join', actor=user)
         self.assertEqual(query.count(), 1, "no stream item created!")
+
 
 class ProfileModelTest(TestCase):
 
@@ -130,6 +149,7 @@ class ProfileModelTest(TestCase):
 ## View Tests
 ##########################################################################
 
+
 class UserViewsTest(TestCase):
 
     def setUp(self):
@@ -145,7 +165,7 @@ class UserViewsTest(TestCase):
         return self.client.login(**credentials)
 
     def logout(self):
-        return self.client.logout();
+        return self.client.logout()
 
     def test_profile_view_auth(self):
         """
@@ -181,3 +201,64 @@ class UserViewsTest(TestCase):
         response = self.client.get(endpoint)
 
         self.assertTemplateUsed(response, 'registration/profile.html')
+
+
+class UserAPITest(APITestCase):
+
+    def setUp(self):
+        self.user   = User.objects.create_user(**fixtures['user'])
+        self.client.force_authenticate(user=self.user)
+
+    def test_user_create(self):
+        """
+        Check that a user can be created using the POST method
+
+        Required to test because the serializer overrides create.
+        NOTE: MUST POST IN JSON TO UPDATE/CREATE PROFILE
+        """
+        endpoint = reverse("api:user-list")
+        response = self.client.post(endpoint, data=fixtures['api_user'],
+                                    format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Check that a profile and user exist in database
+        user = User.objects.filter(username=fixtures['api_user']['username'])
+        profile = Profile.objects.filter(user=user)
+
+        self.assertEquals(len(user), 1)
+        self.assertEquals(len(profile), 1)
+
+        self.assertEqual(profile[0].organization, 'SETI')
+
+    def test_user_update(self):
+        """
+        Check that a user can be updated using a PUT method
+
+        Required to test because the serializer overrides update.
+        NOTE: MUST POST IN JSON TO UPDATE/CREATE PROFILE
+        """
+
+        endpoint = reverse("api:user-detail", kwargs={"pk": self.user.pk})
+
+        # Check that the user profile exists
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Update the profile
+        content  = {
+            "username": self.user.username,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "profile": {
+                "biography": "This is a test bio.",
+                "organization": "NASA"
+            }
+        }
+
+        response = self.client.put(endpoint, content, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Fetch the profile again
+        user = User.objects.get(pk=self.user.pk)
+        self.assertEqual(user.profile.organization, "NASA")

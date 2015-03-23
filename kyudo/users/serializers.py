@@ -17,7 +17,6 @@ Serializers for the members models
 ## Imports
 ##########################################################################
 
-from users.models import *
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from users.models import Profile
@@ -25,6 +24,7 @@ from users.models import Profile
 ##########################################################################
 ## Serializers
 ##########################################################################
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     """
@@ -36,21 +36,58 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Profile
-        fields = ('biography', 'gravatar', 'location')
+        fields = ('biography', 'gravatar', 'location', 'organization')
+
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializes the User object for use in the API.
     """
 
-    profile = ProfileSerializer(many=False, read_only=True)
+    profile = ProfileSerializer(many=False, read_only=False)
 
     class Meta:
         model  = User
-        fields = ('url', 'username', 'first_name', 'last_name', 'profile')
+        fields = (
+            'url', 'username', 'first_name',
+            'last_name', 'email', 'profile'
+        )
         extra_kwargs = {
-            'url': {'view_name': 'api:user-detail',}
+            'url': {'view_name': 'api:user-detail'}
         }
+
+    def create(self, validated_data):
+        """
+        Explicitly define create to also create the Profile object.
+        """
+        profile_data = validated_data.pop('profile')
+        user = User.objects.create(**validated_data)
+
+        for attr, value in profile_data.items():
+            setattr(user.profile, attr, value)
+
+        user.profile.save()
+        return user
+
+    def update(self, instance, validated_data):
+        """
+        Explicitly define update to also update the Profile object.
+        """
+        profile_data = validated_data.pop('profile')
+        profile      = instance.profile
+
+        # Update the user instance
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update the profile instance
+        for attr, value in profile_data.items():
+            setattr(profile, attr, value)
+        profile.save()
+
+        return instance
+
 
 class PasswordSerializer(serializers.Serializer):
 
@@ -61,6 +98,7 @@ class PasswordSerializer(serializers.Serializer):
         if attrs['password'] != attrs['repeated']:
             raise serializers.ValidationError("passwords do not match!")
         return attrs
+
 
 class LocationSerializer(serializers.Serializer):
 

@@ -26,6 +26,7 @@ from users.models import Profile
 ## Inline Adminstration
 ##########################################################################
 
+
 class ProfileInline(admin.StackedInline):
     """
     Inline administration descriptor for profile object
@@ -34,6 +35,7 @@ class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
     verbose_name_plural = 'profile'
+
 
 class UserAdmin(UserAdmin):
     """
