@@ -22,15 +22,17 @@ from users.permissions import IsAdminOrSelf
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView
 
-from users.serializers import *
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route
+from users.serializers import LocationSerializer
+from users.serializers import UserSerializer, PasswordSerializer
 
 ##########################################################################
 ## Views
 ##########################################################################
+
 
 class ProfileView(LoginRequired, TemplateView):
     """
@@ -47,12 +49,16 @@ class ProfileView(LoginRequired, TemplateView):
         """
         context = super(ProfileView, self).get_context_data(**kwargs)
         context['user'] = self.request.user
-        context['activity_stream'] = self.request.user.activity_stream.all()[:10]
+
+        stream = self.request.user.activity_stream.all()[:10]
+        context['activity_stream'] = stream
+
         return context
 
 ##########################################################################
 ## API HTTP/JSON Views
 ##########################################################################
+
 
 class UserViewSet(viewsets.ModelViewSet):
 
@@ -80,7 +86,10 @@ class UserViewSet(viewsets.ModelViewSet):
             user.profile.save()
 
             location_serializer = LocationSerializer(user.profile.location)
-            return Response({'status': 'location set', 'location': location_serializer.data })
+            return Response({
+                'status': 'location set',
+                'location': location_serializer.data
+            })
 
         else:
             return Response(serializer.errors,
