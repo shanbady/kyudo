@@ -32,6 +32,7 @@ TEMPLATE_DEBUG   = False
 ALLOWED_HOSTS    = ['kyudo.bengfort.com', 'robinhood', '104.237.146.93']
 
 ## Static files served by Nginx
+## Keep in mind also that Whitenoise is serving compressed assets
 STATIC_ROOT = '/var/www/kyudo/static'
 MEDIA_ROOT  = '/var/www/kyudo/media'
 

@@ -18,7 +18,7 @@ Testing settings to enable testing on Travis
 ##########################################################################
 
 import os
-from .base import *
+from .development import *
 
 ##########################################################################
 ## Testing Settings

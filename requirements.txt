@@ -6,6 +6,7 @@ django-grappelli==2.6.1
 django-model-utils==2.2
 djangorestframework==3.0.3
 jsonfield==1.0.0
+whitenoise==2.0
 psycopg2==2.6.1
 
 ## User input from Markdown
