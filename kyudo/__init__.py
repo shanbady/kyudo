@@ -17,18 +17,10 @@ The kyudo project definition app
 ## Imports
 ##########################################################################
 
-##########################################################################
-## Module variables
-##########################################################################
-
-__version__ = (1, 0, 4)
+from .version import get_version
 
 ##########################################################################
-## Module functions
+## Module Definition
 ##########################################################################
 
-def get_version():
-    """
-    Returns a string representation of the version.
-    """
-    return ".".join(["%i" % num for num in __version__])
+__version__ = get_version()
