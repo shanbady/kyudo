@@ -18,7 +18,9 @@ Testing settings to enable testing on Travis
 ##########################################################################
 
 import os
-from .development import *
+import tempfile
+
+from .base import *
 
 ##########################################################################
 ## Testing Settings
@@ -43,22 +45,24 @@ DATABASES = {
     },
 }
 
+STATICFILES_STORAGE =  'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+## Content with side effects
+# MEDIA_ROOT       = tempfile.mkdtemp(suffix='media', prefix='kyudo')
+# STATIC_ROOT      = tempfile.mkdtemp(suffix='static', prefix='kyudo')
+
+## Content without? side effects
+MEDIA_ROOT         = "/tmp/kyudo/media"
+STATIC_ROOT        = "/tmp/kyudo/static"
+
 ##########################################################################
 ## Django REST Framework
 ##########################################################################
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-    'PAGINATE_BY': 50,
-    'PAGINATE_BY_PARAM': 'per_page',
-    'MAX_PAGINATE_BY': 200,
-}
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
+    'rest_framework.authentication.SessionAuthentication',
+    'rest_framework.authentication.BasicAuthentication',
+)
 
 ##########################################################################
 ## Stanford Paths

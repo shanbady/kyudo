@@ -223,12 +223,19 @@ FREEBASE_API_KEY                 = environ_setting("FREEBASE_API_KEY")
 ##########################################################################
 
 REST_FRAMEWORK = {
+
+    ## API Authentication
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
     ),
+
+    ## Default permissions to access the API
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+
+    ## Pagination in the API
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGINATE_BY': 50,
     'PAGINATE_BY_PARAM': 'per_page',
     'MAX_PAGINATE_BY': 200,

@@ -23,7 +23,6 @@ from users.serializers import *
 
 from kyudo.utils import signature
 from rest_framework import serializers
-from rest_framework import pagination
 
 ##########################################################################
 ## Question Serializers
@@ -134,11 +133,3 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
             'url': {'view_name': 'api:answer-detail',},
             'question': {'view_name': 'api:question-detail',}
         }
-
-class PaginatedAnswerSerializer(pagination.PaginationSerializer):
-    """
-    Paginates the AnswerSerializer
-    """
-
-    class Meta:
-        object_serializer_class = AnswerSerializer

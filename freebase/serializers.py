@@ -20,7 +20,6 @@ API Serializers for the Freebase app
 from freebase.models import *
 from fugato.models import Question
 from rest_framework import serializers
-from rest_framework import pagination
 
 ##########################################################################
 ## Topic Field
@@ -76,11 +75,3 @@ class TopicAnnotationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'url': {'view_name': 'api:annotation-detail',}
         }
-
-class PaginatedTopicAnnotationSerializer(pagination.PaginationSerializer):
-    """
-    Paginates the TopicAnnotationSerializer
-    """
-
-    class Meta:
-        object_serializer_class = TopicAnnotationSerializer
