@@ -19,7 +19,6 @@ Tests for the users app
 
 import hashlib
 
-from unittest import skip
 from users.models import Profile
 from stream.signals import stream
 from rest_framework import status
