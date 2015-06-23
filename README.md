@@ -1,9 +1,9 @@
-
-
 # Kyudo
 **A research framework for goal driven query interfaces.**
 
-[![Build Status][travis_img]][travis_href] [![Stories in Ready][waffle_img]][waffle_href]
+[![Build Status][travis_img]][travis_href]
+[![Stories in Ready][waffle_img]][waffle_href]
+[![Coverage Status][coveralls_img]][coveralls_href]
 
 [![Kyudo Targets](docs/img/targets.jpg)][targets.jpg]
 
@@ -88,4 +88,6 @@ The image used in this README, [Kyudo Exam 05][targets.jpg] by [Noomai](https://
 [travis_href]: https://travis-ci.org/mclumd/kyudo
 [waffle_img]: https://badge.waffle.io/mclumd/kyudo.png?label=ready&title=Ready
 [waffle_href]: https://waffle.io/mclumd/kyudo
+[coveralls_img]: https://coveralls.io/repos/mclumd/kyudo/badge.svg
+[coveralls_href]: https://coveralls.io/r/mclumd/kyudo
 [targets.jpg]: https://flic.kr/p/4ucxLG
