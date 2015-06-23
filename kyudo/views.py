@@ -21,7 +21,7 @@ import kyudo
 
 from datetime import datetime
 from django.shortcuts import redirect
-from users.mixins import LoginRequired, is_member
+from users.mixins import LoginRequired
 from django.views.generic import TemplateView
 
 from rest_framework import viewsets

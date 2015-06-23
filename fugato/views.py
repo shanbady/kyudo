@@ -22,23 +22,104 @@ from voting.models import Vote
 from fugato.serializers import *
 from voting.serializers import *
 from freebase.serializers import *
-from django.views.generic import DetailView
 from rest_framework import viewsets
+from users.mixins import LoginRequired
 from users.permissions import IsAuthorOrReadOnly
-from rest_framework.permissions import IsAuthenticated
+from django.views.generic import DetailView, TemplateView
+
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import detail_route, list_route
+
+## Similarity View Dependencies
+import os
+import json
+from django.utils.six.moves import zip_longest
+
 
 ##########################################################################
 ## HTTP Generated Views
 ##########################################################################
 
-class QuestionDetail(DetailView):
+class QuestionDetail(LoginRequired, DetailView):
 
     model = Question
-    template_name = "app/question.html"
+    template_name = "fugato/question.html"
     context_object_name = "question"
+
+
+class SimilarityView(LoginRequired, TemplateView):
+
+    template_name = "fugato/similarity.html"
+
+    def post(self, *args, **kwargs):
+        """
+        Handle question similarity data.
+        """
+        context = self.get_context_data()
+        context['result'] = True
+        return self.render_to_response(context)
+
+    def parse_numcases(self):
+        """
+        Returns the number of cases from the GET query
+        """
+        arg = 2
+        num = self.request.GET.get('numcases', arg)
+
+        try:
+            num = int(num)
+            if num > 1:
+                return num
+        except ValueError:
+            pass
+
+        return arg
+
+    def get_requested_cases(self):
+        """
+        Extract the requested cases from the POST data
+        """
+        empties   = lambda n: [""]*n
+        numcases  = self.parse_numcases()
+
+        ## Attempt to get questions from GET example
+        if self.request.GET.get('example', None):
+            slug = self.request.GET.get('example').lower()
+            examples = self.get_preselected_cases()
+            if slug in examples:
+                return list(zip_longest(
+                    examples[slug]['questions'],
+                    examples[slug]['answers'],
+                    fillvalue=""
+                ))
+
+        ## Attempt to get questions from POST data otherwise default to empties
+        questions = self.request.POST.getlist('question', empties(numcases))
+        answers   = self.request.POST.getlist('answer', empties(numcases))
+        return list(zip_longest(questions, answers, fillvalue=""))
+
+    def get_preselected_cases(self):
+        """
+        Populate preselected cases from a JSON file on disk.
+        """
+        cases = os.path.join(os.path.dirname(__file__), "fixtures", "preselected_cases.json")
+        with open(cases, 'r') as f:
+            return json.load(f)
+
+    def get_context_data(self, **kwargs):
+        context = super(SimilarityView, self).get_context_data(**kwargs)
+        context['cases']    = self.get_requested_cases()
+        context['examples'] = self.get_preselected_cases().values()
+
+        ## Handle case addtion and subtraction
+        numcases = self.parse_numcases()
+        context['addcase'] = numcases+1
+        if numcases > 2:
+            context['subcase'] = numcases-1
+        return context
+
 
 ##########################################################################
 ## API HTTP/JSON Views

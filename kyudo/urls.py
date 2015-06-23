@@ -60,6 +60,7 @@ urlpatterns = patterns('',
     url(r'^debug/$', DebugView.as_view(), name='app-debug'),
     url(r'^app/$', WebAppView.as_view(), name='app-root'),
     url(r'^q/(?P<slug>[\w-]+)/$', QuestionDetail.as_view(), name='question'),
+    url(r'^similarity/$', SimilarityView.as_view(), name='app-similarity'),
 
     ## Authentication
     url('', include('social.apps.django_app.urls', namespace='social')),
