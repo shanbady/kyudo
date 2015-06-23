@@ -35,8 +35,8 @@ ALLOWED_HOSTS    = ('127.0.0.1', 'localhost')
 SECRET_KEY = 'cyt*c1@%sg6j@g6y9fdrd@iakg7)ek!dqb@7grl(c-nkm%2596'
 
 ## Content
-MEDIA_ROOT       = os.path.join(PROJECT_DIR, 'media')
-STATIC_ROOT      = os.path.join(PROJECT_DIR, 'static')
+MEDIA_ROOT       = os.path.join(PROJECT, 'media')
+STATIC_ROOT      = os.path.join(PROJECT, 'static')
 
 ##########################################################################
 ## Django REST Framework

@@ -3,8 +3,8 @@ SHELL := /bin/sh
 
 # Set important Paths
 PROJECT := kyudo
-LOCALPATH := $(CURDIR)/$(PROJECT)
-PYTHONPATH := $(LOCALPATH)/
+LOCALPATH := $(CURDIR)
+PYTHONPATH := $(LOCALPATH)
 PYTHON_BIN := $(VIRTUAL_ENV)/bin
 DJANGO_ADMIN := $(LOCALPATH)/manage.py
 

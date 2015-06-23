@@ -89,8 +89,9 @@ class StreamItem(models.Model):
 
     ## Database setup and meta
     class Meta:
-        db_table = 'activity_stream'
-        ordering = ('-timestamp',)
+        app_label = 'stream'
+        db_table  = 'activity_stream'
+        ordering  = ('-timestamp',)
         verbose_name = 'activity stream item'
         verbose_name_plural = 'activity stream items'
 
