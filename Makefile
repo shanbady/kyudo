@@ -3,9 +3,10 @@ SHELL := /bin/sh
 
 # Set important Paths
 PROJECT := kyudo
-LOCALPATH := $(CURDIR)/$(PROJECT)
-PYTHONPATH := $(LOCALPATH)/
+LOCALPATH := $(CURDIR)
+PYTHONPATH := $(LOCALPATH)
 PYTHON_BIN := $(VIRTUAL_ENV)/bin
+DJANGO_ADMIN := $(LOCALPATH)/manage.py
 
 # Production Settings
 SETTINGS := production
@@ -42,11 +43,11 @@ showenv:
 
 # Show help for Django
 djangohelp:
-	$(PYTHON_BIN)/django-admin.py help $(DJANGO_LOCAL_POSTFIX)
+	$(DJANGO_ADMIN) help $(DJANGO_LOCAL_POSTFIX)
 
 # Run the development server
 runserver:
-	$(PYTHON_BIN)/django-admin.py runserver $(DJANGO_LOCAL_POSTFIX)
+	$(DJANGO_ADMIN) runserver $(DJANGO_LOCAL_POSTFIX)
 
 # Clean build files
 clean:
@@ -59,5 +60,5 @@ clean:
 
 # Targets for Django testing
 test:
-	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(LOCALPATH)/manage.py test $(LOCALPATH) $(DJANGO_TEST_POSTFIX)
+	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(DJANGO_ADMIN) test $(LOCALPATH) $(DJANGO_TEST_POSTFIX)
 	- $(PYTHON_BIN)/coverage report

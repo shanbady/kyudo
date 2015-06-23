@@ -1,16 +1,16 @@
-# kyudo.settings.development
-# The Django settings for Kyudo in development
+# kyudo.settings.testing
+# Testing settings to enable testing on Travis
 #
 # Author:   Benjamin Bengfort <bengfort@cs.umd.edu>
-# Created:  Fri Sep 12 16:15:24 2014 -0400
+# Created:  Fri Sep 12 16:18:38 2014 -0400
 #
 # Copyright (C) 2014 UMD Metacognitive Lab
 # For license information, see LICENSE.txt
 #
-# ID: development.py [] bengfort@cs.umd.edu $
+# ID: testing.py [] bengfort@cs.umd.edu $
 
 """
-The Django settings for Kyudo in development
+Testing settings to enable testing on Travis
 """
 
 ##########################################################################
@@ -18,10 +18,10 @@ The Django settings for Kyudo in development
 ##########################################################################
 
 import os
-from .base import *
+from .development import *
 
 ##########################################################################
-## Development Settings
+## Testing Settings
 ##########################################################################
 
 ## Debugging Settings
@@ -29,13 +29,19 @@ DEBUG            = True
 TEMPLATE_DEBUG   = True
 
 ## Hosts
-ALLOWED_HOSTS    = ('127.0.0.1', 'localhost')
+ALLOWED_HOSTS    = ['localhost', '127.0.0.1']
 
-## Secret Key doesn't matter in Dev
-SECRET_KEY = 'cyt*c1@%sg6j@g6y9fdrd@iakg7)ek!dqb@7grl(c-nkm%2596'
-
-## Content
-MEDIA_ROOT       = os.path.join(PROJECT_DIR, 'media')
+## Database Settings
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': environ_setting('DB_NAME', 'kyudo'),
+        'USER': environ_setting('DB_USER', 'postgres'),
+        'PASSWORD': environ_setting('DB_PASS', ''),
+        'HOST': environ_setting('DB_HOST', 'localhost'),
+        'PORT': environ_setting('DB_PORT', '5432'),
+    },
+}
 
 ##########################################################################
 ## Django REST Framework
@@ -58,10 +64,16 @@ REST_FRAMEWORK = {
 ## Stanford Paths
 ##########################################################################
 
+## Add the JAVA_HOME
+JAVA_HOME          = environ_setting("JAVA_HOME", "/usr/lib/jvm/java-8-oracle/")
+
 ## NER JAR and Models
-STANFORD_NER_MODEL = os.path.expanduser("~/Development/stanford-ner-2014-01-04/classifiers/english.all.3class.distsim.crf.ser.gz")
-STANFORD_NER_JAR   = os.path.expanduser("~/Development/stanford-ner-2014-01-04/stanford-ner-2014-01-04.jar")
+STANFORD_NER_MODEL = "/usr/share/stanford/ner/classifiers/english.all.3class.distsim.crf.ser.gz"
+STANFORD_NER_JAR   = "/usr/share/stanford/ner/stanford-ner-2014-01-04.jar"
 
 ## Parser JAR and Models
-STANFORD_PARSER_MODELS = os.path.expanduser("~/Development/stanford-parser-full-2014-10-31/stanford-parser-3.5.0-models.jar")
-STANFORD_PARSER_JAR    = os.path.expanduser("~/Development/stanford-parser-full-2014-10-31/stanford-parser.jar")
+STANFORD_PARSER_MODELS = "/usr/share/stanford/parser/stanford-parser-3.5.0-models.jar"
+STANFORD_PARSER_JAR    = "/usr/share/stanford/parser/stanford-parser.jar"
+
+## Stanford NLP not yet configured
+STANFORD_PARSE_ON_SAVE = False
