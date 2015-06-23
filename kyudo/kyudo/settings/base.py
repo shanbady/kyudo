@@ -142,10 +142,10 @@ GRAPPELLI_ADMIN_TITLE = "Kyudo Admin"
 
 ## Static files (CSS, JavaScript, Images)
 ## https://docs.djangoproject.com/en/1.7/howto/static-files/
-STATIC_URL          = '/static/'
+STATIC_URL          = '/assets/'
 
 STATICFILES_DIRS    = (
-    os.path.join(PROJECT_DIR, 'static'),
+    os.path.join(PROJECT_DIR, 'assets'),
 )
 
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
