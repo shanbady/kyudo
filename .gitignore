@@ -55,3 +55,7 @@ target/
 
 .DS_Store
 *.orig
+
+# Development environment
+venv/
+.env
