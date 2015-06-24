@@ -24,8 +24,8 @@
             </div>
         </div>
 
-        <h2>{{ user.profile.full_name }}</h2>
-        <h3 class="text-muted">{{ user.username }}</h3>
+        <h2 id="profileFullName">{{ user.profile.full_name }}</h2>
+        <h3 class="text-muted" id="profileUsername">{{ user.username }}</h3>
 
         <!-- Heads up profile info -->
         <hr class="profile-sep" />
@@ -42,9 +42,19 @@
             <a href="#" data-toggle="modal" data-target="#setLocationModal">Set Location</a>
           </li>
           {% endif %}
-          <li id="userEmail"><i class="fa fa-envelope"></i> {{ user.email }}</li>
-          <li id="userJoined"><i class="fa fa-clock-o"></i> Joined on {{ user.date_joined|date }}</li>
-          <li id="setPassword"><i class="fa fa-lock"></i> <a href="#" data-toggle="modal" data-target="#setPasswordModal">Change Password</a></li>
+
+          <li id="userOrganization">
+            <i class="fa fa-building"></i>
+            <span id="profileOrganization">{{ user.profile.organization }}</span>
+          </li>
+          <li id="userEmail">
+              <i class="fa fa-envelope"></i>
+              <span id="profileEmail">{{ user.email }}</span>
+          </li>
+          <li id="userJoined">
+              <i class="fa fa-clock-o"></i>
+              Joined on {{ user.date_joined|date }}
+          </li>
         </ul>
 
         <!-- Profile statistics -->
@@ -80,8 +90,13 @@
 
           <!-- edit profile button -->
           <button id="btnEditProfile" class="btn btn-default btn-sm pull-right"
-              disabled="disabled" data-toggle="modal" data-target="#editProfileForm">
+              data-toggle="modal" data-target="#editProfileModal">
             <i class="fa fa-pencil"></i> Edit Profile
+          </button>
+
+          <!-- change password button -->
+          <button id="btnSetPassword" class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#setPasswordModal" style="margin-right:6px">
+            <i class="fa fa-lock"></i> Password
           </button>
 
           <ul class="nav nav-tabs">
@@ -135,65 +150,9 @@
 
 {% block modals %}
   {{ block.super }}
-  <div id="setLocationModal" class="modal fade" tabindex="-1"
-       role="dialog" aria-labelledby="setLocationModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">Set Location</h4>
-        </div>
-        <div class="modal-body">
-          <ol id="locationResults" class="hidden"></ol>
-          <form id="setLocationForm" class="show">
-            <div class="form-group">
-              <input id="txtLocation" type="text" class="form-control" placeholder="Enter Location" />
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button id="btnResetLocation" type="button" class="btn btn-default btn-sm invisible">Back</button>
-
-          <button id="btnSearchLocation" type="submit" class="btn btn-primary btn-sm" form="setLocationForm">Search</button>
-        </div>
-
-      </div> <!-- .modal-content -->
-    </div> <!-- .modal-dialog -->
-  </div> <!-- .modal -->
-
-  <div id="setPasswordModal" class="modal fade" tabindex="-1"
-    role="dialog" aria-labelledby="setPasswordModal" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title">Set Password</h4>
-          </div>
-          <div class="modal-body">
-            <form id="setPasswordForm" class="show">
-              <div class="form-group">
-                <input id="txtPassword" type="password" class="form-control" placeholder="Enter Password" />
-              </div>
-              <div class="form-group">
-                <input id="txtRepeated" type="password" class="form-control" placeholder="Confirm Password" />
-                <span id="passwordHelp" class="help-block"></span>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="reset" class="btn btn-default btn-sm" form="setPasswordForm" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary btn-sm" form="setPasswordForm">Submit</button>
-          </div>
-
-        </div> <!-- .modal-content -->
-      </div> <!-- .modal-dialog -->
-  </div> <!-- .modal -->
+  {% include 'registration/components/set-location-modal.html' %}
+  {% include 'registration/components/edit-profile-modal.html' %}
+  {% include 'registration/components/set-password-modal.html' %}
 {% endblock %}
 
 {% block javascripts %}
@@ -234,6 +193,7 @@
             var passwordForm = $('#setPasswordForm');
             var endpoint     = "/api/freebase";
             var userDetail   = "{{ user.profile.get_api_detail_url }}";
+            var profileForm  = $("#editProfileForm");
 
             // Location form submit event
             locationForm.submit(function(event) {
@@ -363,6 +323,66 @@
               $("#btnSearchLocation").removeAttr('disabled');
               txtLocation.removeAttr('disabled');
               txtLocation.val("");
+            }
+
+            // Handle the profile submission
+            profileForm.submit(function(e) {
+                e.preventDefault();
+
+                // Get the form data
+                var data = _.object(profileForm.serializeArray()
+                                        .map(function(v) {
+                                            return [v.name, v.value];
+                                        }));
+
+                data.profile = {
+                    "biography": data.biography,
+                    "organization": data.organization
+                };
+
+                delete data.biography;
+                delete data.organization;
+
+                $.ajax({
+                    "url": userDetail,
+                    "method": "PUT",
+                    "data": JSON.stringify(data),
+                    "contentType": "application/json"
+                }).done(function(data) {
+
+                    // Update DOM with data requested
+                    $("#profileFullName").text(data.first_name + " " + data.last_name);
+                    $("#profileUsername").text(data.username);
+                    $("#profileEmail").text(data.email);
+                    $("#profileOrganization").text(data.profile.organization);
+
+                    $("#editProfileModal").modal("hide");
+
+                }).fail(function(xhr) {
+
+                    data = xhr.responseJSON;
+
+                    // Set the error
+                    $.each(data, function(key, val) {
+                        var field = $("#"+key);
+                        field.parent().addClass("has-error");
+                        field.parent().find('.help-block').text(val);
+                    });
+
+                });
+
+                return false;
+            });
+
+            // Reset form on close
+            $("#editProfileModal").on("hide.bs.modal", function(e) {
+                resetEditProfileModal();
+            });
+
+            // Helper function to reset edit profile modal
+            function resetEditProfileModal() {
+                profileForm.find('.form-group').removeClass("has-error");
+                profileForm.find('.help-block').text("");
             }
 
         });

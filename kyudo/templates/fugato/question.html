@@ -1,0 +1,925 @@
+{% extends 'page.html' %}
+{% load staticfiles %}
+{% load votable %}
+{# Displays all the information about a particular question #}
+
+  {% block stylesheets %}
+    {{ block.super }}
+    <style type="text/css">
+      .question-sidebar {
+        margin-top: 18px;
+      }
+
+      .question-actions {
+        margin: 10px 0;
+      }
+
+      .question-details-form {
+        margin-bottom: 20px;
+      }
+
+      .ambiguous {
+        cursor: help;
+      }
+
+      #questionHeader, #writeAnswer, .answer {
+        border-bottom: 1px solid #b7b7b7;
+      }
+
+      .answer, #writeAnswer, #scientificDetails {
+        padding: 14px 0;
+      }
+
+      .answer-text {
+        margin: 18px 0 18px 0;
+      }
+
+    </style>
+  {% endblock %}
+
+  {% block content %}
+    <div class="container">
+      <!-- Questions get a three column layout -->
+      <div class="row">
+
+        <!-- Left Column -->
+        <div class="col-md-2 question-sidebar">
+          <h5>Concepts</h5>
+          <ul id="conceptList" class="list-unstyled">
+            {% for annotation in question.annotations.all %}
+            <li>
+              <a class="topic-annotation{% if annotation.is_ambiguous %} ambiguous{% endif %}"
+                  href="{{ annotation.get_api_detail_url }}" id="concept{{ forloop.counter }}"
+                  data-annotation-id="{{ annotation.id }}" data-text="{{ annotation.text }}"
+                  data-user="{{ annotation.user_id }}" data-question="{{ annotation.question_id }}"
+                  data-topic-mid="{{ annotation.topic.mid }}" data-topic-title="{{ annotation.topic.title }}"
+                  data-topic-notable="{{ annotation.topic.notability }}">
+                {% if annotation.is_ambiguous %}
+                <i class="fa fa-question"></i>
+                {{ annotation.text }}
+                {% else %}
+                {{ annotation.topic }}
+                {% endif %}
+              </a>
+            </li>
+            {% empty %}
+            <li>No extracted concepts</li>
+            {% endfor %}
+          </ul>
+
+          <a id="aNewTopic" class="topic-annotation btn btn-xs btn-primary"
+             href="{% url 'api:annotation-list' %}">
+            <i class="fa fa-plus-circle"></i>
+            add topic
+          </a>
+        </div><!-- end left column -->
+
+        <!-- Middle Column -->
+        <div class="col-md-7">
+
+          <!-- question header -->
+          <div id="questionHeader">
+            <h2 id="questionText">{{ question.text }}</h2>
+            <p class="text-muted">
+              <small>asked on {{ question.created|date }} by {{ question.author.get_full_name }}</small>
+            </p>
+
+            <!-- question actions -->
+            <div class="question-actions">
+              {% current_user_vote question as voted %}
+
+              <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                      type="button" data-vote="1" data-candidate="{{ question.get_api_detail_url }}">
+                <i class="fa fa-thumbs-up"></i> |
+                <span class="vote-count">{{ question.votes.upvotes.count }}</span>
+              </button>
+
+              <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                      type="button" data-vote="-1" data-candidate="{{ question.get_api_detail_url }}">
+                <i class="fa fa-thumbs-down"></i> |
+                <span class="vote-count">{{ question.votes.downvotes.count }}</span>
+              </button>
+
+              <div class="pull-right">
+                {% if question.author == request.user %}
+                {% if question.details %}
+                <p><a class="edit-details" href="#">Edit Details</a></p>
+                {% else %}
+                <p><a class="edit-details" href="#">Add Details</a></p>
+                {% endif %}
+                {% endif %}
+              </div>
+              <div class="clearfix"></div>
+            </div>
+
+            <!-- question details -->
+            <div class="question-details">
+              {% if question.details %}
+              {{ question.details_rendered|safe }}
+              {% endif %}
+            </div>
+
+            <!-- question details form -->
+            <div class="question-details-form">
+              <form role="form" id="formQuestionDetails" class="hidden">
+                <div class="form-group">
+                  <textarea id="txtQuestionDetails" class="form-control" rows="8">{% if question.details %}{{ question.details }}{% endif %}</textarea>
+                  <span class="help-block pull-left">Edit Details in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
+                </div>
+                <div class="pull-right">
+                  <button id="btnCancelEditDetails" type="button" class="btn btn-default btn-sm">Cancel</button>
+                  <button id="btnSubmitEditDetails" type="submit" class="btn btn-primary btn-sm">Update</button>
+                </div>
+                <div class="clearfix"></div>
+              </form>
+            </div>
+
+            <!-- answes meta data -->
+            <div id="answerMeta">
+            {% with count=question.answers.count %}
+              <p class="pull-left"><strong>{{ count }} ANSWER{{ count|pluralize:"S" }}</strong></p>
+              <p class="pull-right"><a href="#writeAnswer">Answer Question</a></p>
+            {% endwith %}
+              <div class="clearfix"></div>
+            </div>
+          </div><!-- end question header -->
+
+          <!-- answers list -->
+          <div id="answerList">
+            {% for answer in question.answers.all %}
+
+            <div class="answer">
+              <!-- answer info (author, date) -->
+              <div class="answer-info">
+                <img title="{{ answer.author }}" src="{{ answer.author.profile.gravatar }}" />
+                {% if answer.author.get_full_name %}
+                <p>answered by <strong>{{ answer.author.get_full_name }}</strong></p>
+                {% else %}
+                <p>answered by <strong>{{ answer.author.username }}</strong></p>
+                {% endif %}
+                <p class="text-muted"><small>answered on {{ answer.created|date }}</small></p>
+              </div>
+
+              <!-- answer text -->
+              <div class="answer-text">
+                {{ answer.text_rendered|safe }}
+              </div>
+
+              <!-- answer actions (vote, comment) -->
+              <div class="answer-actions">
+                {% current_user_vote answer as voted %}
+
+                <button class="btn btn-default btn-xs btn-vote{% if voted == 1 %} btn-warning{% endif %}"
+                        type="button" data-vote="1" data-candidate="{{ answer.get_api_detail_url }}">
+                  <i class="fa fa-thumbs-up"></i> |
+                  <span class="vote-count">{{ answer.votes.upvotes.count }}</span>
+                </button>
+
+                <button class="btn btn-default btn-xs btn-vote{% if voted == -1 %} btn-warning{% endif %}"
+                        type="button" data-vote="-1" data-candidate="{{ answer.get_api_detail_url }}">
+                  <i class="fa fa-thumbs-down"></i> |
+                  <span class="vote-count">{{ answer.votes.downvotes.count }}</span>
+                </button>
+              </div>
+            </div>
+            {% empty %}
+            <div class="answer">
+              <h4 class="text-center">Be the first to answer this question!</h4>
+            </div>
+            {% endfor %}
+          </div><!-- end answer list -->
+
+          <!-- add answer -->
+          <div id="writeAnswer">
+            <div class="question-details-form">
+              <h4>Compose an answer</h4>
+              <form role="form" id="answerForm" class="" action="{% url 'api:answer-list' %}" method="POST">
+                <div class="form-group">
+                  <textarea id="answerText" name="text" class="form-control" rows="8"></textarea>
+                  <span class="help-block pull-left">Edit Answer in <a href="https://daringfireball.net/projects/markdown/basics" rel="nofollow" target="blank" style="color: #b7b7b7;" title="Markdown Syntax">Markdown</a></span>
+                  <span class="help-block pull-left" id="textFormError"></span>
+                </div>
+                <div class="pull-right">
+                  <input type="hidden" id="answerQuestion" name="question" class="form-control" value="{{ question.get_api_detail_url }}" />
+                  <button id="submitAnswer" type="submit" class="btn btn-primary btn-sm">
+                    Post your Answer
+                  </button>
+                </div>
+                <div class="clearfix"></div>
+              </form>
+            </div>
+          </div><!-- end write answer -->
+
+          <!-- scientific details -->
+          <div id="scientificDetails">
+            <h4>Scientific Details</h4>
+            <pre>{{ question.parse }}</pre>
+            <p class="text-info pull-left">Parse took {{ question.parse_time|floatformat:3 }} seconds.</p>
+            <p id="parse-annotation" class="text-muted pull-right editable-item">
+              {% if question.parse_annotation.is_annotated %}
+                {% if question.parse_annotation.correct %}
+                marked <span class="text-success">correct</span> by {{ question.parse_annotation.user.username }}
+                {% else %}
+                marked <span class="text-danger">incorrect</span> by {{ question.parse_annotation.user.username }}
+                {% endif %}
+                <a href="#" class="edit-link"></a>
+              {% else %}
+              is this parse
+              <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
+              or
+              <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
+              {% endif %}
+            </p>
+          </div><!-- end scientific details -->
+
+          <div class="clearfix"></div>
+        </div><!-- end middle column -->
+
+        <!-- Right column -->
+        <div class="col-md-3 question-sidebar">
+          <h5>Related Questions</h5>
+          <ul class="list-unstyled">
+            {% for related in question.related.all %}
+            <li><a href="{{ related.get_absolute_url }}">{{ related }}</a></li>
+            {% empty %}
+            <li>No related questions found</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  {% endblock %}
+
+  {% block modals %}
+    {{ block.super }}
+
+    <!-- Topic Annotation Modals -->
+    <div id="editTopicModal" class="modal fade" tabindex="-1"
+         role="dialog" aria-labelledby="editTopicModal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- topic annotation header -->
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">Manage Topics</h4>
+          </div>
+
+          <!-- topic annotation body -->
+          <div class="modal-body">
+
+            <!-- topic search form -->
+            <div id="topicSearch">
+              <form id="topicSearchForm">
+                <div class="form-group">
+                  <input type="text" id="topicSearchQuery" class="form-control" placeholder="Enter Topic" />
+                </div>
+              </form>
+              <ol id="topicResults" class=""></ol>
+            </div>
+
+            <!-- topic annotation form -->
+            <div id="topicAnnotation" class="hidden">
+              <form id="topicAnnotationForm" action="" class="form-horizontal">
+                <fieldset>
+                <div class="form-group">
+                  <label class="control-label col-sm-2"><strong>Topic</strong></label>
+                  <div class="col-sm-10">
+                    <p id="pTopicText" class="form-control-static"></p>
+                    <span class="help-block form-error" id="topicFormError"></span>
+                    <input type="hidden" id="topicAnnotationTopic" name="topic" value="" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="topicAnnotationText" class="col-sm-2 control-label"><strong>Text</strong></label>
+                  <div class="col-sm-10">
+                    <input type="text" id="topicAnnotationText" name="text" class="form-control" placeholder="Text From Question" />
+                    <span class="help-block">Please ensure that the text appears verbatim in the question.</span>
+                    <span class="help-block form-error" id="textFormError"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-sm-2"><strong>Question</strong></label>
+                  <div class="col-sm-10">
+                    <p id="pQuestionText" class="form-control-static">{{ question.text }}</p>
+                    <span class="help-block form-error" id="questionFormError"></span>
+                    <input type="hidden" id="topicAnnotationQuestion" name="question" value="{{ question.get_api_detail_url }}" />
+                  </div>
+                </div>
+                </fieldset>
+              </form>
+            </div>
+
+          </div>
+
+          <!-- topic annotation footer -->
+          <div class="modal-footer">
+            <button id="btnEditTopicSearch" type="submit"
+                    class="btn btn-primary btn-sm pull-left" form="topicSearchForm">
+              <i class="fa fa-search"></i> Search
+            </button>
+            <button id="btnDeleteAnnotation" type="button"
+                    class="btn btn-danger btn-sm invisible">
+              <i class="fa fa-trash"></i> Delete
+            </button>
+            <button id="btnEditTopicBack" type="button"
+                    class="btn btn-default btn-sm invisible">
+              <i class="fa fa-arrow-circle-left"></i> Search
+            </button>
+            <button id="btnEditTopicSubmit" type="submit"
+                    class="btn btn-primary btn-sm invisible" form="topicAnnotationForm">
+              <i class="fa fa-check-circle"></i> Submit
+            </button>
+          </div>
+
+        </div> <!-- .modal-content -->
+      </div> <!-- .modal-dialog -->
+    </div> <!-- .modal -->
+
+  {% endblock %}
+
+  {% block javascripts %}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min.js"></script>
+    {{ block.super }}
+
+    <script type="text/template" class="template" id="parseAnnotationTemplate">
+      <% if (correct) { %>
+        marked <span class="text-success">correct</span> by <%- username %>
+      <% } else { %>
+        marked <span class="text-danger">incorrect</span> by <%- username %>
+      <% } %>
+        <a href="#" class="edit-link"></a>
+    </script>
+
+    <script type="text/template" class="template" id="editParseAnnotationTemplate">
+      is this parse
+      <a href="#" data-correct="true" class="text-success parse-annotate-link">correct</a>
+      or
+      <a href="#" data-correct="false" class="text-danger parse-annotate-link">incorrect</a>?
+    </script>
+
+    <script type="text/template" class="template" id="topicItemTemplate">
+      <li>
+        <a href="<%= link %>" title="Set as Topic" class="topicResult"
+           data-mid="<%= mid %>" data-title="<%= name %>" data-notable="<%= notable %>">
+          <%= name %>
+        </a>
+        <small class="text-muted"><%= notable %></small>
+      </li>
+    </script>
+
+    <script type="text/template" class="template" id="answerTemplate">
+      <div class="answer">
+        <!-- answer info (author, date) -->
+        <div class="answer-info">
+          <img title="<%= author %>" src="<%= gravatar %>" />
+          <p>answered by <strong><%= author %></strong></p>
+          <p class="text-muted"><small>answered on <%= created %></small></p>
+        </div>
+
+        <!-- answer text -->
+        <div class="answer-text">
+          <%= text_rendered %>
+        </div>
+
+        <!-- answer actions (vote, comment) -->
+        <div class="answer-actions">
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-up"></i> |
+            <span class="vote-count">0</span>
+          </button>
+
+          <button class="btn btn-default btn-xs btn-vote"
+                  type="button" data-vote="-1" data-candidate="<%= url %>">
+            <i class="fa fa-thumbs-down"></i> |
+            <span class="vote-count">0</span>
+          </button>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/javascript">
+      (function($) {
+        $(document).ready(function() {
+
+          // Configure the question application
+          var csrfToken   = $('input[name="csrfmiddlewaretoken"]').val();
+          $.ajaxSetup({headers: {"X-CSRFToken": csrfToken}});
+          console.log("question application ready")
+
+          var endpoint             = "{{ question.get_api_detail_url }}";
+          var questionText         = $("#questionText").text();
+          var questionDetails      = $("div.question-details");
+          var detailsForm          = $("form#formQuestionDetails");
+          var txtQuestionDetails   = $("#txtQuestionDetails");
+          var btnEditDetails       = $(".edit-details");
+          var btnCancelEditDetails = $("#btnCancelEditDetails");
+          var btnSubmitEditDetails = $("#btnSubmitEditDetails");
+          var parseAnnotationTmpl  = _.template($("#parseAnnotationTemplate").html());
+          var editParseAnnotatTmpl = _.template($("#editParseAnnotationTemplate").html());
+
+          ////////////////////////////////////////////////////////////////
+          /// Handle the Details editing
+          ////////////////////////////////////////////////////////////////
+
+          // Handle edit details link press (start editing)
+          btnEditDetails.click(function(e) {
+            e.preventDefault();
+            questionDetails.addClass("hidden").removeClass("show");
+            detailsForm.addClass("show").removeClass("hidden");
+            $(".edit-details").addClass("hidden").removeClass("show");
+            return false;
+          });
+
+          // Handle the cancel edit button press (stop editing)
+          btnCancelEditDetails.click(function(e) {
+            questionDetails.addClass("show").removeClass("hidden");
+            detailsForm.addClass("hidden").removeClass("show");
+            $(".edit-details").addClass("show").removeClass("hidden");
+
+            // Reload the text input with the data
+            $.getJSON(endpoint, function(data) {
+              txtQuestionDetails.val(data.details);
+            });
+
+            return false;
+          });
+
+          // Handle the submission of the details form (PUT changes)
+          detailsForm.submit(function(e) {
+            e.preventDefault();
+
+            // Get the data from the text input and validate
+            var details = txtQuestionDetails.val();
+            if (!details) {
+              console.log("Nothing to submit");
+              return
+            }
+
+            // Disable the details form
+            detailsForm.find("textarea, button").attr('disabled', 'disabled');
+
+            // Put the data to the server
+            $.ajax({
+              url: endpoint,
+              type: 'PUT',
+              data: {
+                'text': questionText,
+                'details': details
+              },
+              success: function(data) {
+                // Set the details and the details_rendered
+                txtQuestionDetails.val(data.details);
+                questionDetails.html(data.details_rendered);
+
+                $(".edit-details").text("Edit Details");
+                $(".edit-details").addClass("show").removeClass("hidden");
+
+                // Swap and show the new area
+                detailsForm.find("textarea, button").removeAttr("disabled");
+                questionDetails.addClass("show").removeClass("hidden");
+                detailsForm.addClass("hidden").removeClass("show");
+              }
+            });
+
+
+            return false;
+          });
+
+          ////////////////////////////////////////////////////////////////
+          /// Write or Update answers
+          ////////////////////////////////////////////////////////////////
+
+          var createAnswerEndpoint = "{% url 'api:answer-list' %}";
+          var answerTmpl = _.template($("#answerTemplate").html());
+
+          // Handle answer form submit
+          $("#answerForm").submit(function(e) {
+            e.preventDefault();
+
+            // Set form state
+            var form = $(this);
+            form.find("button").attr('disabled', 'disabled');
+
+            // Collect data from form
+            var formData = getFormData(form);
+
+            // Select endpoint (important for when we update answers)
+            var endpoint = form.attr("action");
+            var method   = form.attr("method");
+
+            // Send the data to the endpoint
+            $.ajax({
+              url: endpoint,
+              method: method,
+              data: formData
+            }).done(function(data) {
+
+              console.log(data);
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+              form.find("textarea").val("");
+
+              // Append the answer (in the future, update answer)
+              var full_name = data.author.first_name + " " + data.author.last_name;
+              full_name     = full_name.trim();
+
+              var answer    = $(answerTmpl({
+                  author: full_name ? full_name : data.author.username,
+                  gravatar: data.author.profile.gravatar,
+                  text_rendered: data.text_rendered,
+                  url: data.url,
+                  created: moment(data.created).format("MMMM D, YYYY")
+                }));
+              answer.find('button.btn-vote').click(onVote)
+              $("#answerList").append(answer);
+
+            }).fail(function(jqxhr, status, error) {
+              // Reset the form state
+              form.find("button").removeAttr('disabled');
+
+              // Set error state
+              form.addClass('has-error');
+
+              $.each(jqxhr.responseJSON, function(field, errors) {
+                block = $("span#" + field + "FormError");
+                if (block) {
+                  block.text(errors[0]);
+                }
+              });
+
+              console.log(jqxhr.responseJSON);
+              console.log(error);
+            });
+
+
+
+            return false;
+          });
+
+          ////////////////////////////////////////////////////////////////
+          /// Parse Annotation
+          ////////////////////////////////////////////////////////////////
+
+          // Handle parse annotation links
+          $(".parse-annotate-link").click(onParseAnnotateClick);
+
+          function onParseAnnotateClick(e) {
+            e.preventDefault();
+
+            var parse_endpoint = endpoint + "parse/";
+            var data = $(this).data();
+
+            $.post(parse_endpoint, data, function(data) {
+
+              if (data.success) {
+                $("#parse-annotation").html(
+                  parseAnnotationTmpl({
+                    correct: data.correct,
+                    username: "{{ request.user.username }}"
+                  })
+                );
+
+                $("#parse-annotation a.edit-link").click(onEditParseAnnotationClick);
+              }
+
+            });
+
+            return false;
+          }
+
+          // Handle edit parse annotation link
+          $("#parse-annotation a.edit-link").click(onEditParseAnnotationClick);
+
+          function onEditParseAnnotationClick(e) {
+            e.preventDefault();
+            $("#parse-annotation").html(editParseAnnotatTmpl());
+            $(".parse-annotate-link").click(onParseAnnotateClick);
+            return false
+          }
+
+          ////////////////////////////////////////////////////////////////
+          /// Voting
+          ////////////////////////////////////////////////////////////////
+
+          // Handle the question voting buttons
+          $("button.btn-vote").click(onVote);
+
+          function onVote(e) {
+            e.preventDefault();
+
+            var target = $(this);
+            var data   = target.data();
+            var vote_endpoint = data.candidate + "vote/";
+            var parent = target.parent();
+
+            $.post(vote_endpoint, data, function(result) {
+
+              // Update the buttons according to the response
+              $.each(parent.find("button.btn-vote"), function(idx, obj) {
+                obj  = $(obj);
+                data = obj.data();
+
+                // Handle the indication class
+                if (data.vote == result.vote) {
+                  obj.addClass("btn-warning");
+                } else {
+                  obj.removeClass("btn-warning");
+                }
+
+                // Handle the count inside of the span
+                var span = obj.find("span.vote-count");
+                if (data.vote == 1) {
+                  span.text(result.upvotes);
+                } else if (data.vote == -1) {
+                  span.text(result.downvotes);
+                } else {
+                  span.text("0");
+                }
+
+              });
+
+            });
+
+            return false;
+
+          }
+
+          ////////////////////////////////////////////////////////////////
+          /// Topic Annotation
+          ////////////////////////////////////////////////////////////////
+
+          var topicEndpoint        = "/api/freebase/";
+          var qtaEndpoint          = endpoint + "annotations/";
+          var editTopicModal       = $("#editTopicModal");
+          var topicSearch          = $("#topicSearch");
+          var topicAnnotation      = $("#topicAnnotation");
+          var topicSearchForm      = $("#topicSearchForm");
+          var topicSearchQuery     = $("#topicSearchQuery");
+          var topicAnnotationForm  = $("#topicAnnotationForm");
+          var topicAnnotationText  = $("#topicAnnotationText");
+          var topicAnnotationTopic = $("#topicAnnotationTopic");
+          var resultsList          = $("#topicResults");
+          var btnEditTopicSearch   = $("#btnEditTopicSearch");
+          var btnEditTopicSubmit   = $("#btnEditTopicSubmit");
+          var btnEditTopicBack     = $("#btnEditTopicBack");
+          var btnDeleteAnnotation  = $("#btnDeleteAnnotation");
+
+          // Holds the id of the concept being processed
+          var currentTopic         = "";
+          var addTopicId           = "aNewTopic";
+
+          // Templates
+          var topicTmpl = _.template($("#topicItemTemplate").html());
+
+          // Handle the topic detail modal
+          $(".topic-annotation").click(onTopicAnnotationClick);
+
+          function onTopicAnnotationClick(e) {
+            // Stop the link click
+            e.preventDefault();
+
+            var target   = $(this);
+            var data     = target.data();
+            currentTopic = target.attr('id');
+
+            // Set the state of the forms in the dialog
+            topicSearchQuery.val(data.text);
+            topicAnnotationText.val(data.text);
+            topicAnnotationForm.attr('action', target.attr('href'));
+
+            if (!target.hasClass('ambiguous') && !(currentTopic == addTopicId)) {
+              // If this is an unambiguous query - show the detail
+              setStaticTopic(data.topicMid, data.topicTitle, data.topicNotable);
+
+              // Change state to the topic annotation form
+              toggleTopicBtnState('annotate');
+              hide(topicSearch);
+              show(topicAnnotation);
+            }
+
+            // Show the modal and return
+            editTopicModal.modal('show');
+            return false;
+          }
+
+          // Handle the search form submission
+          topicSearchForm.submit(function(e) {
+            e.preventDefault();
+
+            var val = topicSearchQuery.val();
+
+            topicSearchQuery.attr('disabled', 'disabled');
+            $.getJSON(topicEndpoint, {'query': val}, onTopicResult);
+
+            return false;
+          });
+
+          // Handle the annotation form submission
+          topicAnnotationForm.submit(function(e) {
+            e.preventDefault();
+
+            // Get information to POST
+            var action   = topicAnnotationForm.attr('action');
+            var formData = getFormData(topicAnnotationForm);
+
+            // Disable form (after getting form data -- required)
+            topicAnnotationText.attr('disabled', 'disabled');
+            btnEditTopicBack.attr('disabled', 'disabled');
+            btnEditTopicSubmit.attr('disabled', 'disabled');
+
+            var method = "PUT";
+            if (action == "{% url 'api:annotation-list' %}") {
+              method = "POST";
+            }
+
+            $.ajax({
+              'method':  method,
+              'url':     action,
+              'data':    formData,
+            }).done(function(data) {
+
+              // Update the current topic
+              if (currentTopic == addTopicId) {
+                // Add topic item
+                $("ul#conceptList")
+                  .append(
+                    $("<li></li>")
+                      .text(data.topic)
+                  );
+              } else {
+                // Update topic item
+                $("#" + currentTopic)
+                    .text(data.topic)
+                    .removeClass('ambiguous');
+              }
+
+              // Close the form and therefore reset all the fields
+              editTopicModal.modal('hide');
+
+            }).fail(function(jqxhr, status, error) {
+
+              // Reset the form state
+              topicAnnotationText.removeAttr('disabled');
+              btnEditTopicBack.removeAttr('disabled');
+              btnEditTopicSubmit.removeAttr('disabled');
+
+              // Set error state
+              topicAnnotationForm.addClass('has-error');
+
+              $.each(jqxhr.responseJSON, function(field, errors) {
+                block = $("span#" + field + "FormError");
+                if (block) {
+                  block.text(errors[0]);
+                }
+              });
+
+              console.log(jqxhr.responseJSON);
+              console.log(error);
+
+            });
+
+            return false;
+          });
+
+          // On response from the topic search API
+          function onTopicResult(data) {
+            topicSearchQuery.removeAttr('disabled');
+            resultsList.empty();
+
+            $.each(data.result, function(idx, obj) {
+              if (idx > 5) {
+                return false
+              }
+
+              resultsList.append(
+                topicTmpl({
+                  link: endpoint + obj.mid,
+                  mid: obj.mid,
+                  name: obj.name,
+                  notable: obj.notable ? obj.notable.name : ""
+                })
+              );
+            });
+
+            // Add topic result click handler
+            $(".topicResult").click(onSelectTopic);
+          }
+
+          function onSelectTopic(e) {
+            e.preventDefault();
+
+            var data = $(e.target).data();
+            setStaticTopic(data.mid, data.title, data.notable)
+
+            // Change state to the topic annotation form
+            toggleTopicBtnState('annotate');
+            hide(topicSearch);
+            show(topicAnnotation);
+
+            return false;
+          }
+
+          // btnEditTopicBack click handler
+          btnEditTopicBack.click(function(e) {
+            toggleTopicBtnState('search');
+
+            hide(topicAnnotation);
+            show(topicSearch);
+
+            topicAnnotationForm.removeClass('has-error');
+            $("span.form-error").text("");
+          });
+
+          // btnDeleteAnnotation click handler
+          btnDeleteAnnotation.click(function(e) {
+            if (window.confirm("Are you sure?")) {
+              console.log("not implemented yet");
+              editTopicModal.modal('hide');
+            }
+          });
+
+          // Reset the modal on close
+          editTopicModal.on('hidden.bs.modal', function (e) {
+            resetTopicModal();
+          });
+
+          // Set the topic identifier in the detail form
+          function setStaticTopic(mid, title, notable) {
+            var topicHtml = "<span class=\"text-primary\">" + title + "</span> <small>" + notable + "</small>";
+            $("#pTopicText").html(topicHtml);
+            topicAnnotationTopic.val(mid);
+          }
+
+          // Reset the topic annotation form
+          function resetTopicModal() {
+            // Remove intermediate states
+            topicSearchQuery.removeAttr('disabled');
+            topicAnnotationText.removeAttr('disabled');
+            btnEditTopicBack.removeAttr('disabled');
+            btnEditTopicSubmit.removeAttr('disabled');
+            topicAnnotationForm.removeClass('has-error');
+            $("span.form-error").text("");
+            resultsList.empty();
+
+            // Clear form states back to defaults
+            $("#pTopicText").html("");
+            topicAnnotationTopic.val("");
+            topicSearchQuery.val("");
+            topicAnnotationText.val("");
+            topicAnnotationForm.attr('action', "");
+
+            // Revert the state of the modal
+            toggleTopicBtnState('search');
+            hide(topicAnnotation);
+            show(topicSearch);
+
+            // Forget the current topic
+            currentTopic = "";
+          }
+
+          // Toggle topic form button states
+          function toggleTopicBtnState(action) {
+            action = action || 'search';
+
+            if (action == 'search') {
+              // Set button state to search mode
+              btnEditTopicSearch.removeClass('invisible');
+              btnEditTopicSubmit.addClass('invisible');
+              btnEditTopicBack.addClass('invisible');
+              // btnDeleteAnnotation.addClass('invisible');
+            } else if (action == 'annotate') {
+              // Set button state to annotate mode
+              btnEditTopicSearch.addClass('invisible');
+              btnEditTopicSubmit.removeClass('invisible');
+              btnEditTopicBack.removeClass('invisible');
+              // btnDeleteAnnotation.removeClass('invisible');
+            } else {
+              console.log("ERROR! Unknown topic button state \"" + action + "\"!");
+            }
+          }
+
+          // Helper function to hide elements
+          function hide(elem) {
+            elem.addClass("hidden").removeClass("show");
+          }
+
+          // Helper function to show elements
+          function show(elem) {
+            elem.addClass("show").removeClass("hidden");
+          }
+
+          // Helper function to collect form data
+          function getFormData(form) {
+            var data = form.serializeArray();
+            return _.object(data.map(function(v) { return [v.name, v.value]; }));
+          }
+
+        });
+      })(jQuery);
+    </script>
+  {% endblock %}

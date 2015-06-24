@@ -1,0 +1,178 @@
+{% extends 'page.html' %}
+{% load staticfiles %}
+{# Quick interface to help investigate similarity metrics #}
+
+{% block content %}
+
+  <div id="similarityApp" class="container">
+
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="page-header">
+          <h2>Case Similarity Interface</h2>
+        </div>
+      </div>
+    </div><!-- page header ends -->
+
+    <div class="row">
+      <div class="col-sm-12">
+
+        <form class="form" id="similarityForm" action="{% url 'app-similarity' %}" method="POST">
+          {% for case in cases %}
+          {% include 'fugato/snippets/question-sim-entry.html' with label=forloop.counter case=case %}
+          {% empty %}
+          <div class="alert alert-danger" role="alert">
+            <strong>Whoops!</strong> Something went wrong and no cases were returned!?
+          </div>
+          {% endfor %}
+
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary">Compute</button>
+            <a href="{% url 'app-similarity' %}" class="btn btn-default">Reset</a>
+            <div class="btn-group">
+              <button type="button" class="btn btn-info dropdown-toggle"
+                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Example Cases <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                {% for example in examples %}
+                <li><a href="{% url 'app-similarity' %}?example={{ example.slug }}">{{ example.display }}</a></li>
+                {% empty %}
+                <li><a href="#">No examples yet</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <!-- Hidden Fields -->
+            {% csrf_token %}
+            <input type="hidden" id="geo_latitude" name="latitude" />
+            <input type="hidden" id="geo_longitude" name="longitude" />
+            <input type="hidden" id="geo_accuracy" name="accuracy" />
+
+            <div class="pull-right">
+              <a href="{% url 'app-similarity' %}?numcases={{ addcase }}" class="btn btn-default">
+                <i class="fa fa-plus-circle"></i> Add Case
+              </a>
+              {% if subcase %}
+              <a href="{% url 'app-similarity' %}?numcases={{ subcase }}" class="btn btn-default">
+                <i class="fa fa-minus-circle"></i> Remove Case
+              </a>
+              {% endif %}
+            </div>
+            <div class="clearfix"></div>
+
+          </div>
+        </form>
+
+      </div>
+    </div><!-- question/answer entry ends -->
+
+    {% if result %}
+
+    <!-- Similarity Scores -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-success">
+          <button type="button" class="close" aria-label="help"
+                  data-toggle="modal" data-target="#similarityInformationModal">
+            <span aria-hidden="true"><i class="fa fa-question-circle"></i></span>
+          </button>
+          <strong>Similarity Scores:</strong> {{ result.group_jaccard }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Entities Panel -->
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">Entities/Concepts</h4>
+          </div><!-- end panel heading -->
+          <div class="panel-body">
+            <ul class="list-unstyled">
+              {% for entity in result.entities %}
+              <li>{{ entity }}</li>
+              {% empty %}
+              <li>No entities discovered</li>
+              {% endfor %}
+            </ul>
+          </div><!-- end panel body -->
+          <div class="panel-footer">
+
+          </div><!-- end panel footer -->
+        </div><!-- end entities panel -->
+      </div><!-- end entities panel column -->
+
+      <!-- Tasks Panel -->
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">Task</h4>
+          </div><!-- end panel heading -->
+          <div class="panel-body">
+
+          </div><!-- end panel body -->
+          <div class="panel-footer">
+
+          </div><!-- end panel footer -->
+        </div><!-- end tasks panel -->
+      </div><!-- end tasks panel column -->
+
+      <!-- Context Panel -->
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">Context</h4>
+          </div><!-- end panel heading -->
+          <div class="panel-body">
+            <dl>
+              <dt>User</dt>
+                <dd>{{ user.first_name }} {{ user.last_name }}</dd>
+              <dt>Time</dt>
+                <dd>{% now "jS F Y H:i" %}</dd>
+              <dt>GPS Location</td>
+                <dd><span class="hidden gps">(<span class="latitude"></span>, <span class="longitude"></span>)</span></dd>
+            </dl>
+          </div><!-- end panel body -->
+          <div class="panel-footer">
+
+          </div><!-- end panel footer -->
+        </div><!-- end context panel -->
+      </div><!-- end context panel column -->
+
+    </div><!-- end extracted panels row -->
+    {% endif %}
+
+  </div><!-- #similarityApp ends -->
+
+{% endblock %}
+
+{% block modals %}
+  {% include 'fugato/modals/similarity-info-modal.html' %}
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <script type="text/javascript">
+    $(function() {
+
+      navigator.geolocation.getCurrentPosition(GetLocation);
+      function GetLocation(location) {
+        // Set hidden form fields
+        $("#geo_latitude").val(location.coords.latitude);
+        $("#geo_longitude").val(location.coords.longitude);
+        $("#geo_accuracy").val(location.coords.accuracy);
+
+        // Set display fields if they exist
+        $("span.latitude").text(location.coords.latitude);
+        $("span.longitude").text(location.coords.longitude);
+        $("span.gps").removeClass("hidden");
+
+        console.log("GPS coordinates acquired.");
+      }
+
+    });
+
+  </script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{
+    "world-sports": {
+        "slug": "world-sports",
+        "display": "World Sports example",
+        "questions": [
+            "Who won the World Series?",
+            "Where will the World Cup be held?"
+        ],
+        "answers": [
+            "The San Francisco Giants",
+            "Russia"
+        ]
+    },
+    "existential-dilemma": {
+        "slug": "existential-dilemma",
+        "display": "Existential Dilemma",
+        "questions": [
+            "Who am I?",
+            "Where am I?"
+        ],
+        "answers": [
+            "", ""
+        ]
+    }
+}
