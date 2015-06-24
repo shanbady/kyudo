@@ -15,8 +15,25 @@
           Kyudo
         </a>
       </div>
-      <div class="collapse navbar-collapse navbar-right">
+      <div class="collapse navbar-collapse">
+
+        <!-- Left Nav -->
+        {% if user.is_authenticated %}
         <ul class="nav navbar-nav">
+          <li><a href="{% url 'app-root' %}">Casebase</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reasoning Tools <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'app-similarity' %}"><i class="fa fa-puzzle-piece"></i> Similarity</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'app-debug' %}"><i class="fa fa-plug"></i> Debugging</a></li>
+            </ul>
+          </li>
+        </ul>
+        {% endif %}
+
+        <!-- Right Nav -->
+        <ul class="nav navbar-nav navbar-right">
           {% if user.is_authenticated %}
           <li class="dropdown">
 
@@ -36,7 +53,7 @@
               {% endif %}
               <li class="dropdown-header">User Settings</li>
               <li><a href="{% url 'profile' %}"><i class="fa fa-user"></i> View Profile</a></li>
-              <li><a href="{% url 'auth:logout' %}"><i class="fa fa-road"></i>  Log out</a></li>
+              <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out"></i>  Log out</a></li>
             </ul>
           </li>
           <li>
@@ -47,7 +64,7 @@
             </button>
           </li>
           {% else %}
-          <li><a href="{% url 'social:begin' 'google-oauth2' %}"><b class=""></b> Log in</a></li>
+          <li><a href="{% url 'social:begin' 'google-oauth2' %}"><i class="fa fa-google-plus-square"></i> Log in with Google</a></li>
           {% endif %}
         </ul>
 
