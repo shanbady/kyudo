@@ -42,7 +42,12 @@
                 {% endfor %}
               </ul>
             </div>
+
+            <!-- Hidden Fields -->
             {% csrf_token %}
+            <input type="hidden" id="geo_latitude" name="latitude" />
+            <input type="hidden" id="geo_longitude" name="longitude" />
+            <input type="hidden" id="geo_accuracy" name="accuracy" />
 
             <div class="pull-right">
               <a href="{% url 'app-similarity' %}?numcases={{ addcase }}" class="btn btn-default">
@@ -85,7 +90,7 @@
             <h4 class="panel-title">Entities/Concepts</h4>
           </div><!-- end panel heading -->
           <div class="panel-body">
-            <ul>
+            <ul class="list-unstyled">
               {% for entity in result.entities %}
               <li>{{ entity }}</li>
               {% empty %}
@@ -121,7 +126,14 @@
             <h4 class="panel-title">Context</h4>
           </div><!-- end panel heading -->
           <div class="panel-body">
-
+            <dl>
+              <dt>User</dt>
+                <dd>{{ user.first_name }} {{ user.last_name }}</dd>
+              <dt>Time</dt>
+                <dd>{% now "jS F Y H:i" %}</dd>
+              <dt>GPS Location</td>
+                <dd><span class="hidden gps">(<span class="latitude"></span>, <span class="longitude"></span>)</span></dd>
+            </dl>
           </div><!-- end panel body -->
           <div class="panel-footer">
 
@@ -138,4 +150,29 @@
 
 {% block modals %}
   {% include 'fugato/modals/similarity-info-modal.html' %}
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <script type="text/javascript">
+    $(function() {
+
+      navigator.geolocation.getCurrentPosition(GetLocation);
+      function GetLocation(location) {
+        // Set hidden form fields
+        $("#geo_latitude").val(location.coords.latitude);
+        $("#geo_longitude").val(location.coords.longitude);
+        $("#geo_accuracy").val(location.coords.accuracy);
+
+        // Set display fields if they exist
+        $("span.latitude").text(location.coords.latitude);
+        $("span.longitude").text(location.coords.longitude);
+        $("span.gps").removeClass("hidden");
+
+        console.log("GPS coordinates acquired.");
+      }
+
+    });
+
+  </script>
 {% endblock %}
