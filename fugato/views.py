@@ -33,10 +33,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import detail_route, list_route
 
 ## Similarity View Dependencies
-import os
-import json
+from fugato.similarity import Similarity
+from fugato.similarity import preselected_cases
 from django.utils.six.moves import zip_longest
-
 
 ##########################################################################
 ## HTTP Generated Views
@@ -58,7 +57,7 @@ class SimilarityView(LoginRequired, TemplateView):
         Handle question similarity data.
         """
         context = self.get_context_data()
-        context['result'] = True
+        context['result'] = Similarity(context['cases'])
         return self.render_to_response(context)
 
     def parse_numcases(self):
@@ -87,11 +86,10 @@ class SimilarityView(LoginRequired, TemplateView):
         ## Attempt to get questions from GET example
         if self.request.GET.get('example', None):
             slug = self.request.GET.get('example').lower()
-            examples = self.get_preselected_cases()
-            if slug in examples:
+            if slug in preselected_cases:
                 return list(zip_longest(
-                    examples[slug]['questions'],
-                    examples[slug]['answers'],
+                    preselected_cases[slug]['questions'],
+                    preselected_cases[slug]['answers'],
                     fillvalue=""
                 ))
 
@@ -100,18 +98,10 @@ class SimilarityView(LoginRequired, TemplateView):
         answers   = self.request.POST.getlist('answer', empties(numcases))
         return list(zip_longest(questions, answers, fillvalue=""))
 
-    def get_preselected_cases(self):
-        """
-        Populate preselected cases from a JSON file on disk.
-        """
-        cases = os.path.join(os.path.dirname(__file__), "fixtures", "preselected_cases.json")
-        with open(cases, 'r') as f:
-            return json.load(f)
-
     def get_context_data(self, **kwargs):
         context = super(SimilarityView, self).get_context_data(**kwargs)
         context['cases']    = self.get_requested_cases()
-        context['examples'] = self.get_preselected_cases().values()
+        context['examples'] = preselected_cases.values()
 
         ## Handle case addtion and subtraction
         numcases = self.parse_numcases()

@@ -72,7 +72,7 @@
                   data-toggle="modal" data-target="#similarityInformationModal">
             <span aria-hidden="true"><i class="fa fa-question-circle"></i></span>
           </button>
-          <strong>Similarity Scores:</strong> {{ similarity }}</strong>
+          <strong>Similarity Scores:</strong> {{ result.group_jaccard }}</strong>
         </div>
       </div>
     </div>
@@ -85,7 +85,13 @@
             <h4 class="panel-title">Entities/Concepts</h4>
           </div><!-- end panel heading -->
           <div class="panel-body">
-
+            <ul>
+              {% for entity in result.entities %}
+              <li>{{ entity }}</li>
+              {% empty %}
+              <li>No entities discovered</li>
+              {% endfor %}
+            </ul>
           </div><!-- end panel body -->
           <div class="panel-footer">
 
