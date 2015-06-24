@@ -19,8 +19,8 @@ Helper module for managing versioning information
 
 __version_info__ = {
     'major': 1,
-    'minor': 0,
-    'micro': 4,
+    'minor': 1,
+    'micro': 0,
     'releaselevel': 'final',
     'serial': 0,
 }
