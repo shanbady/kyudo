@@ -27,6 +27,7 @@ from kyudo.views import *
 from users.views import *
 from fugato.views import *
 from freebase.views import *
+from reasoner.views import *
 
 ##########################################################################
 ## Endpoint Discovery
@@ -61,6 +62,7 @@ urlpatterns = patterns('',
     url(r'^app/$', WebAppView.as_view(), name='app-root'),
     url(r'^q/(?P<slug>[\w-]+)/$', QuestionDetail.as_view(), name='question'),
     url(r'^similarity/$', SimilarityView.as_view(), name='app-similarity'),
+    url(r'^reasoner/$', ReasonerPrototypeView.as_view(), name='app-reasoner-prototype'),
 
     ## Authentication
     url('', include('social.apps.django_app.urls', namespace='social')),

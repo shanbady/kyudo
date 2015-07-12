@@ -1,0 +1,29 @@
+{% extends 'page.html' %}
+{# Basic Prototype of the Case Reasoner #}
+
+{% block content %}
+
+  <div id="reasonerPrototypeApp" class="container">
+
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="page-header">
+          <h2>Reasoner Prototype Interface</h2>
+        </div>
+      </div>
+    </div><!-- page header ends -->
+
+  </div><!-- #reasonerPrototypeApp ends -->
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <script type="text/javascript">
+    $(function() {
+
+      console.log("Prototype application ready!");
+
+    });
+
+  </script>
+{% endblock %}
