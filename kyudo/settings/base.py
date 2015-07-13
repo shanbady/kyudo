@@ -116,6 +116,7 @@ INSTALLED_APPS = (
     'fugato',   # Initial query collection app
     'freebase', # Handles the knowledge base and RDF api
     'voting',   # Handles the upvoting and downvoting of objects
+    'reasoner', # Simple case based reasoning prototype
 )
 
 ## Request Handling

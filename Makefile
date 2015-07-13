@@ -24,7 +24,7 @@ DJANGO_TEST_SETTINGS_MODULE = $(PROJECT).settings.$(TEST_SETTINGS)
 DJANGO_TEST_POSTFIX := --settings=$(DJANGO_TEST_SETTINGS_MODULE) --pythonpath=$(PYTHONPATH)
 
 # Apps to test
-APPS := freebase fugato users voting
+APPS := freebase fugato users voting reasoner
 
 # Export targets not associated with files
 .PHONY: test showenv coverage bootstrap pip virtualenv clean virtual_env_set
