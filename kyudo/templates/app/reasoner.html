@@ -5,13 +5,97 @@
 
   <div id="reasonerPrototypeApp" class="container">
 
+    <!-- two columns row -->
     <div class="row">
-      <div class="col-sm-12">
-        <div class="page-header">
-          <h2>Reasoner Prototype Interface</h2>
+
+      <!-- left sidebar -->
+      <div class="col-sm-3">
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">Current Dialogue</div>
+          </div>
+
+          <div class="panel-body">
+
+          </div>
+
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Started</td>
+                <td>Mon Jul 13 07:38 2015</td>
+              </tr>
+              <tr>
+                <td>Questions</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>Subgoals</td>
+                <td>0</td>
+              </tr>
+
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div><!-- page header ends -->
+
+      </div><!-- left sidebar ends -->
+
+      <!-- right sidebar -->
+      <div class="col-sm-9">
+
+        <button id="btnStartDialogue" class="btn btn-default btn-sm pull-right">
+          <!-- <i class="fa fa-play-circle"></i> Start Dialogue -->
+          <i class="fa fa-stop"></i> Stop Dialogue
+        </button>
+
+        <ul class="nav nav-tabs">
+          <li class="active">
+            <a href="#interactive" data-toggle="tab">
+              <i class="fa fa-comment"></i> Interactive
+            </a>
+          </li>
+          <li>
+            <a href="#history" data-toggle="tab">
+              <i class="fa fa-history"></i> History
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <div id="interactive" class="tab-pane active">
+
+
+            <form>
+              <div class="form-group">
+                <label class="form-label" for="id_question">Question {{ label }}</label>
+                <input name="question" type="text" class="form-control" placeholder="Enter Question Text" value="{{ case.0 }}" />
+              </div>
+              <div class="form-group">
+                <select>
+                  <option>Subgoal 1</option>
+                  <option>Subgoal 2</option>
+                </select>
+              </div>
+
+            </form>
+
+          </div><!-- interactive panel ends -->
+
+          <div id="history" class="tab-pane">
+
+            <div class="well">
+              <p>Session history</p>
+            </div>
+
+          </div><!-- interactive panel ends -->
+
+        </div><!-- tab-content ends -->
+
+        <div class="clearfix"></div>
+      </div><!-- right sidebar ends -->
+
+    </div><!-- two columns row ends -->
 
   </div><!-- #reasonerPrototypeApp ends -->
 {% endblock %}

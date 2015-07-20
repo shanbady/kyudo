@@ -113,32 +113,32 @@
 
         <div class="tab-content">
           <div id="activity" class="tab-pane active">
+            <div class="well">
+              <!-- Activity Log -->
+              <ul class="list-unstyled activity-stream">
+              {% for activity in activity_stream %}
+                <li class="stream-item">
+                  <span class="text-muted"><small>{{ activity.timesince }} ago</small></span><br />
+                  {% autoescape off %}
+                  {% if activity.target %}
+                    {% if activity.theme %}
+                      {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }} on {{ activity.get_target_html }}
+                    {% else %}
+                      {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_target_html }}
+                    {% endif %}
 
-            <!-- Activity Log -->
-            <ul class="list-unstyled activity-stream">
-            {% for activity in activity_stream %}
-              <li class="stream-item">
-                <span class="text-muted"><small>{{ activity.timesince }} ago</small></span><br />
-                {% autoescape off %}
-                {% if activity.target %}
-                  {% if activity.theme %}
-                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }} on {{ activity.get_target_html }}
+                  {% elif activity.theme %}
+                      {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }}
                   {% else %}
-                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_target_html }}
+                    {{ activity.get_actor_html }} {{ activity.get_verb_display }}
                   {% endif %}
-
-                {% elif activity.theme %}
-                    {{ activity.get_actor_html }} {{ activity.get_verb_display }} {{ activity.get_theme_html }}
-                {% else %}
-                  {{ activity.get_actor_html }} {{ activity.get_verb_display }}
-                {% endif %}
-                {% endautoescape %}
-              </li>
-            {% empty %}
-              <li>No activities recorded yet</li>
-            {% endfor %}
-            </ul>
-            <!-- end activity log -->
+                  {% endautoescape %}
+                </li>
+              {% empty %}
+                <li>No activities recorded yet</li>
+              {% endfor %}
+              </ul><!-- end activity log -->
+            </div>
 
           </div><!-- activity panel ends -->
         </div><!-- tab-content ends -->

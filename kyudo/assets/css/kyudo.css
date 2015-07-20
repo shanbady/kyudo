@@ -54,6 +54,10 @@ body {
 
 /* Specific Styles */
 
+.tab-pane {
+    padding-top: 10px;
+}
+
 #splash-box {
   min-height: 400px;
   margin-top: 10px;
