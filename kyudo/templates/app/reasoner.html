@@ -6,12 +6,20 @@
 
   <div id="reasonerPrototypeApp" class="container">
 
+    <!-- alerts and messages row -->
+    <div class="row">
+      <div class="col-xs-12">
+        <div id="alerts"></div>
+      </div>
+    </div>
+
     <!-- two columns row -->
     <div class="row">
 
       <!-- left sidebar -->
       <div class="col-sm-3">
 
+        <!-- Dialogue Information Panel -->
         <div class="panel panel-default">
           <div class="panel-heading">
             <div class="panel-title">Dialogue Information</div>
@@ -170,14 +178,27 @@
     {% endverbatim %}
   </script>
 
+  <script id="tmplAlert" type="x-tmpl-mustache">
+    {% verbatim %}
+    <div class="alert alert-dismissible alert-{{ level }}" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>{{ &notice }}</strong> {{ message }}
+    </div>
+    {% endverbatim %}
+  </script>
+
   <!-- Primary Logics -->
   <script type="text/javascript">
     $(function() {
 
-      var user_id  = {{ user.id }};
-      var endpoint = "{% url 'api:dialogue-list' %}";
-      var btntmpl  = $("#tmplBtnToggleDialogue").html();
-      var infotmpl = $("#tmplDialogueInformation").html();
+      var refresh; // Timer for refreshing dialogue data
+
+      var user_id   = {{ user.id }};
+      var dialogue  = "{% if dialogue.active %}{{ dialogue.id }}{% endif %}";
+      var endpoint  = "{% url 'api:dialogue-list' %}";
+      var btntmpl   = $("#tmplBtnToggleDialogue").html();
+      var infotmpl  = $("#tmplDialogueInformation").html();
+      var alerttmpl = $("#tmplAlert").html();
 
       // Start and stop the dialogue with the toggle button
       function onToggleDialogue(e) {
@@ -207,11 +228,22 @@
               "icon": "fa-stop",
               "label": "Stop Dialogue"
             };
+
+            // Update the UI with the new information.
             button.replaceWith(Mustache.render(btntmpl, btnview));
             updateDialogueInformation(data);
+
+            // Start refresh timeout
+            startRefresh(data.id);
           })
-          .fail(function() {
-            console.log("Could not start the dialogue!");
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not start the dialogue:", textStatus, errorThrown);
+            var alert = Mustache.render(alerttmpl, {
+              "level": "danger",
+              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
+              "message": "Could not start the dialogue due to API error."
+            });
+            $("#alerts").append(alert);
           });
       }
 
@@ -230,11 +262,22 @@
               "icon": "fa-play-circle",
               "label": "Start Dialogue"
             };
+
+            // Update the UI
             button.replaceWith(Mustache.render(btntmpl, view));
             updateDialogueInformation(data);
+
+            // Stop the refresh
+            stopRefresh();
           })
-          .fail(function() {
-            console.log("Could not stop the dialogue!");
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not stop the dialogue:", textStatus, errorThrown);
+            var alert = Mustache.render(alerttmpl, {
+              "level": "danger",
+              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
+              "message": "Could not stop the dialogue due to API error."
+            });
+            $("#alerts").append(alert);
           })
       }
 
@@ -257,8 +300,43 @@
         $("#dialogueInformationTable").html(Mustache.render(infotmpl, data));
       }
 
+      // Refresh the dialogue information every 10 seconds.
+      function startRefresh(dialogueId) {
+        // console.log("refreshing id", dialogueId, "every 10 seconds.");
+        dialogue = dialogueId;
+        stopRefresh();
+
+        if (dialogue) {
+          refresh = setTimeout(function() {
+            $.get(endpoint + dialogue + "/")
+              .success(function(data) {
+                updateDialogueInformation(data);
+                startRefresh(data.id);
+              })
+              .fail(function() {
+                console.log("Couldn't refresh data?!");
+                stopRefresh();
+              });
+
+          }, 10000);
+        }
+      }
+
+      // Stop the refresh cycle.
+      function stopRefresh() {
+        if (refresh) {
+          clearTimeout(refresh);
+          refresh = null;
+        }
+      }
+
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
+
+      // Start refresh loop
+      if (dialogue) {
+        startRefresh(dialogue);
+      }
 
     });
 
