@@ -28,9 +28,10 @@
           {% if not dialogue %}
           <div class="panel-body">
             <p class="text-muted">You can start your first dialogue by pressing the "Start Dialogue" button.</p>
+            <p class="text-muted">This panel will display information about the current investigative session.</p>
           </div>
-          {% else %}
-          <table id="dialogueInformationTable" class="table">
+          {% endif %}
+          <table id="dialogueInformationTable" class="table{% if not dialogue %} hidden{% endif %}">
             <tbody>
               <tr>
                 <td>Started</td>
@@ -42,7 +43,7 @@
                   {% endif %}
                 </td>
               </tr>
-              {% if not dialogue.active %}
+              {% if dialogue and not dialogue.active %}
               <tr>
                 <td>Finished</td>
                 <td>
@@ -64,7 +65,7 @@
               </tr>
             </tbody>
           </table>
-          {% endif %}
+
         </div><!-- dialogue information panel ends -->
 
       </div><!-- left sidebar ends -->
@@ -196,6 +197,9 @@
       var user_id   = {{ user.id }};
       var dialogue  = "{% if dialogue.active %}{{ dialogue.id }}{% endif %}";
       var endpoint  = "{% url 'api:dialogue-list' %}";
+      var datetimeFormat = "MMM D, YYYY [at] h:mm A";
+
+      // Templates
       var btntmpl   = $("#tmplBtnToggleDialogue").html();
       var infotmpl  = $("#tmplDialogueInformation").html();
       var alerttmpl = $("#tmplAlert").html();
@@ -222,6 +226,15 @@
 
         $.post(endpoint, data)
           .success(function(data) {
+
+            // Replace the start dialogue panel if it exists
+            if ($("#dialogueInformationTable").hasClass("hidden")) {
+              var table = $("#dialogueInformationTable");
+              table.removeClass("hidden");
+              table.siblings('.panel-body').remove();
+            }
+
+            // Create button view data
             var btnview = {
               "toggle": "stop",
               "target": data.id,
@@ -256,6 +269,8 @@
 
         $.post(endpoint + target + "/complete/", data)
           .success(function(data) {
+
+            // Create button view data
             var view = {
               "toggle": "start",
               "target": "",
@@ -293,8 +308,8 @@
         if (data.active) {
           data.started  = data.started.fromNow();
         } else {
-          data.started  = data.started.format("MMM D, YYYY [at] h:m A");
-          data.finished = data.finished.format("MMM D, YYYY [at] h:m A");
+          data.started  = data.started.format(datetimeFormat);
+          data.finished = data.finished.format(datetimeFormat);
         }
 
         $("#dialogueInformationTable").html(Mustache.render(infotmpl, data));
