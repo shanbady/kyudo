@@ -1,4 +1,5 @@
 {% extends 'page.html' %}
+{% load humanize %}
 {# Basic Prototype of the Case Reasoner #}
 
 {% block content %}
@@ -13,41 +14,68 @@
 
         <div class="panel panel-default">
           <div class="panel-heading">
-            <div class="panel-title">Current Dialogue</div>
+            <div class="panel-title">Dialogue Information</div>
           </div>
 
+          {% if not dialogue %}
           <div class="panel-body">
-
+            <p class="text-muted">You can start your first dialogue by pressing the "Start Dialogue" button.</p>
           </div>
-
-          <table class="table">
+          {% else %}
+          <table id="dialogueInformationTable" class="table">
             <tbody>
               <tr>
                 <td>Started</td>
-                <td>Mon Jul 13 07:38 2015</td>
+                <td>
+                  {% if dialogue.active %}
+                  {{ dialogue.started|naturaltime }}
+                  {% else %}
+                  {{ dialogue.started|date:"M j, Y \a\t h:i A" }}
+                  {% endif %}
+                </td>
+              </tr>
+              {% if not dialogue.active %}
+              <tr>
+                <td>Finished</td>
+                <td>
+                  {{ dialogue.finished|date:"M j, Y \a\t h:i A" }}
+                </td>
               </tr>
               <tr>
+                <td>Duration</td>
+                <td>{{ dialogue.started|timesince:dialogue.finished }}</td>
+              </tr>
+              {% endif %}
+              <tr>
                 <td>Questions</td>
-                <td>0</td>
+                <td>{{ dialogue.questions.count }}</td>
               </tr>
               <tr>
                 <td>Subgoals</td>
-                <td>0</td>
+                <td>{{ dialogue.questions.subgoals.count }}</td>
               </tr>
-
             </tbody>
           </table>
-        </div>
+          {% endif %}
+        </div><!-- dialogue information panel ends -->
 
       </div><!-- left sidebar ends -->
 
       <!-- right sidebar -->
       <div class="col-sm-9">
 
-        <button id="btnStartDialogue" class="btn btn-default btn-sm pull-right">
-          <!-- <i class="fa fa-play-circle"></i> Start Dialogue -->
+        <!-- Dialogue Toggle Button -->
+        {% if dialogue.active %}
+        <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                data-toggle="stop" data-target="{{ dialogue.id }}">
           <i class="fa fa-stop"></i> Stop Dialogue
         </button>
+        {% else %}
+        <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                data-toggle="start" data-target="">
+          <i class="fa fa-play-circle"></i> Start Dialogue
+        </button>
+        {% endif %}
 
         <ul class="nav nav-tabs">
           <li class="active">
@@ -102,10 +130,135 @@
 
 {% block javascripts %}
   {{ block.super }}
+  <!-- Templates -->
+  <script id="tmplBtnToggleDialogue" type="x-tmpl-mustache">
+    {% verbatim %}
+    <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+            data-toggle="{{ toggle }}" data-target="{{ target }}">
+      <i class="fa {{ icon }}"></i> {{ label }}
+    </button>
+    {% endverbatim %}
+  </script>
+
+  <script id="tmplDialogueInformation" type="x-tmpl-mustache">
+    {% verbatim %}
+    <tbody>
+      <tr>
+        <td>Started</td>
+        <td>{{ started }}</td>
+      </tr>
+      {{ ^active }}
+      <tr>
+        <td>Finished</td>
+        <td>
+          {{ finished }}
+        </td>
+      </tr>
+      <tr>
+        <td>Duration</td>
+        <td>{{ duration }}</td>
+      </tr>
+      {{ /active }}
+      <tr>
+        <td>Questions</td>
+        <td>{{ num_questions }}</td>
+      </tr>
+      <tr>
+        <td>Subgoals</td>
+        <td>{{ num_subgoals }}</td>
+      </tr>
+    {% endverbatim %}
+  </script>
+
+  <!-- Primary Logics -->
   <script type="text/javascript">
     $(function() {
 
-      console.log("Prototype application ready!");
+      var user_id  = {{ user.id }};
+      var endpoint = "{% url 'api:dialogue-list' %}";
+      var btntmpl  = $("#tmplBtnToggleDialogue").html();
+      var infotmpl = $("#tmplDialogueInformation").html();
+
+      // Start and stop the dialogue with the toggle button
+      function onToggleDialogue(e) {
+        var button = $(e.target);
+        var toggle = button.data('toggle');
+        var target = button.data('target');
+
+        var jump   = {
+          "start": startDialogue,
+          "stop":  stopDialogue
+        }
+
+        return jump[toggle](target, button);
+      };
+
+      // Handle all the logic for starting the dialogue
+      function startDialogue(target, button) {
+        data = {
+          "user": user_id
+        }
+
+        $.post(endpoint, data)
+          .success(function(data) {
+            var btnview = {
+              "toggle": "stop",
+              "target": data.id,
+              "icon": "fa-stop",
+              "label": "Stop Dialogue"
+            };
+            button.replaceWith(Mustache.render(btntmpl, btnview));
+            updateDialogueInformation(data);
+          })
+          .fail(function() {
+            console.log("Could not start the dialogue!");
+          });
+      }
+
+      // Handle all the logic for stopping the dialogue
+      function stopDialogue(target, button) {
+        data = {
+          "successful": true,
+          "completed": true
+        }
+
+        $.post(endpoint + target + "/complete/", data)
+          .success(function(data) {
+            var view = {
+              "toggle": "start",
+              "target": "",
+              "icon": "fa-play-circle",
+              "label": "Start Dialogue"
+            };
+            button.replaceWith(Mustache.render(btntmpl, view));
+            updateDialogueInformation(data);
+          })
+          .fail(function() {
+            console.log("Could not stop the dialogue!");
+          })
+      }
+
+      // Helper function to update the dialogue information table
+      function updateDialogueInformation(data) {
+
+        data.num_questions = data.questions.length;
+        data.num_subgoals  = 0;
+        data.started       = moment(data.started);
+        data.finished      = moment(data.finished);
+        data.duration      = moment.duration(data.finished - data.started).humanize();
+
+        if (data.active) {
+          data.started  = data.started.fromNow();
+        } else {
+          data.started  = data.started.format("MMM D, YYYY [at] h:m A");
+          data.finished = data.finished.format("MMM D, YYYY [at] h:m A");
+        }
+
+        $("#dialogueInformationTable").html(Mustache.render(infotmpl, data));
+      }
+
+      // Event Bindings
+      $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
 
     });
 

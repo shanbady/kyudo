@@ -20,6 +20,7 @@ Models for the reasoner app.
 from django.db import models
 from datetime import datetime
 from kyudo.utils import nullable
+from reasoner.managers import DialogueManager
 from model_utils.models import TimeStampedModel
 
 ##########################################################################
@@ -29,9 +30,9 @@ from model_utils.models import TimeStampedModel
 class Dialogue(models.Model):
 
     user       = models.ForeignKey('auth.User', related_name="dialogues")
-    started    = models.DateTimeField(default='auto_now_add')
+    started    = models.DateTimeField(auto_now_add=True)
     finished   = models.DateTimeField(**nullable)
-    modified   = models.DateTimeField(default='auto_now')
+    modified   = models.DateTimeField(auto_now=True)
     successful = models.NullBooleanField(default=None, help_text="the dialog was successful")
     completed  = models.BooleanField(default=False, help_text="user has finished the dialog")
     terminated = models.BooleanField(default=False, help_text="dialog closed after inactivity")
@@ -40,13 +41,27 @@ class Dialogue(models.Model):
                     through="QuestionSeries", through_fields=('dialogue', 'question')
                 )
 
+    ## Custom manager object
+    objects    = DialogueManager()
+
+    @property
+    def active(self):
+        """
+        Computes whether or not the current dialogue is active.
+        """
+        return (
+            not self.completed and not self.terminated
+        )
+
     def duration(self, struct=False):
         """
-        Returns the number of seconds the dialoge lasted, or the current duration if
-        the session has not been completed yet. This method is also used for determining
-        whether or not the dialogue should be terminated (e.g. timed out).
+        Returns the number of seconds the dialoge lasted, or the current
+        duration if the session has not been completed yet. This method is
+        also used for determining whether or not the dialogue should be
+        terminated (e.g. timed out).
 
-        If struct is True - this returns a timedelta object rather than seconds integer.
+        If struct is True - this returns a timedelta object rather than
+        seconds integer.
         """
         tstamp = self.finished if self.finished else datetime.now()
         delta  = tstamp - self.started
