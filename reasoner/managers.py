@@ -37,3 +37,17 @@ class DialogueManager(models.Manager):
                 return dialogue
             return None
         return dialogue
+
+##########################################################################
+## QuestionSeries Manager
+##########################################################################
+
+class QuestionSeriesManager(models.Manager):
+
+    use_for_related_fields = True
+
+    def subgoals(self):
+        """
+        Filters such that only the subgoal questions are returned.
+        """
+        return self.filter(is_subgoal=True)

@@ -21,6 +21,7 @@ from django.db import models
 from datetime import datetime
 from kyudo.utils import nullable
 from reasoner.managers import DialogueManager
+from reasoner.managers import QuestionSeriesManager
 from model_utils.models import TimeStampedModel
 
 ##########################################################################
@@ -52,6 +53,9 @@ class Dialogue(models.Model):
         return (
             not self.completed and not self.terminated
         )
+
+    def subgoals(self):
+        return self.questions.through.objects.subgoals()
 
     def duration(self, struct=False):
         """
@@ -87,6 +91,9 @@ class QuestionSeries(TimeStampedModel):
     # Tracks goal hierarchy of dialogue
     is_subgoal  = models.BooleanField(default=False)
     parent_goal = models.ForeignKey('fugato.Question', related_name="child_goals", **nullable)
+
+    ## Custom manager object
+    objects     = QuestionSeriesManager()
 
     class Meta:
         db_table = "dialogue_question_series"
