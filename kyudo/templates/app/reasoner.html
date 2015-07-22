@@ -111,7 +111,7 @@
         <!-- Dialogue Toggle Button -->
         {% if dialogue.active %}
         <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
-                data-toggle="stop" data-target="{{ dialogue.id }}">
+                data-toggle="stop" data-target="{{ dialogue.get_api_detail_url }}">
           <i class="fa fa-stop"></i> Stop Dialogue
         </button>
         {% else %}
@@ -138,10 +138,10 @@
           <div id="interactive" class="tab-pane active">
 
 
-            <form>
+            <form id="interactiveForm">
               <div class="form-group">
                 <label class="form-label" for="id_question">Question {{ label }}</label>
-                <input name="question" type="text" class="form-control" placeholder="Enter Question Text" value="{{ case.0 }}" />
+                <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
               </div>
               <div class="form-group">
                 <select class="form-control">
@@ -157,7 +157,17 @@
           <div id="history" class="tab-pane">
 
             <div class="well">
-              <p>Session history</p>
+              <!-- Activity Log -->
+              <ul class="list-unstyled">
+              {% for question in dialogue.series.all %}
+                <li>
+                  <span class="text-muted"><small>{{ dialogue.started|timesince:question.created }} after start</small></span><br />
+                  <a href="{{ question.question.get_absolute_url }}">{{ question.question }}</a>
+                </li>
+              {% empty %}
+                <li>No activities recorded yet</li>
+              {% endfor %}
+              </ul><!-- end activity log -->
             </div>
 
           </div><!-- interactive panel ends -->
@@ -229,8 +239,8 @@
 
       var refresh; // Timer for refreshing dialogue data
 
-      var user_id   = {{ user.id }};
-      var dialogue  = "{% if dialogue.active %}{{ dialogue.id }}{% endif %}";
+      var user      = "{{ user.profile.get_api_detail_url }}";
+      var dialogue  = "{% if dialogue.active %}{{ dialogue.get_api_detail_url }}{% endif %}";
       var endpoint  = "{% url 'api:dialogue-list' %}";
       var datetimeFormat = "MMM D, YYYY [at] h:mm A";
 
@@ -255,9 +265,7 @@
 
       // Handle all the logic for starting the dialogue
       function startDialogue(target, button) {
-        data = {
-          "user": user_id
-        }
+        data = {}
 
         $.post(endpoint, data)
           .success(function(data) {
@@ -272,7 +280,7 @@
             // Create button view data
             var btnview = {
               "toggle": "stop",
-              "target": data.id,
+              "target": data.url,
               "icon": "fa-stop",
               "label": "Stop Dialogue"
             };
@@ -282,7 +290,7 @@
             updateDialogueInformation(data);
 
             // Start refresh timeout
-            startRefresh(data.id);
+            startRefresh(data.url);
           })
           .fail(function(jqXHR, textStatus, errorThrown ) {
             console.log("Could not start the dialogue:", textStatus, errorThrown);
@@ -297,12 +305,13 @@
 
       // Handle all the logic for stopping the dialogue
       function stopDialogue(target, button) {
-        data = {
+        var url  = target + "complete/";
+        var data = {
           "successful": true,
           "completed": true
         }
 
-        $.post(endpoint + target + "/complete/", data)
+        $.post(url, data)
           .success(function(data) {
 
             // Create button view data
@@ -351,17 +360,17 @@
       }
 
       // Refresh the dialogue information every 10 seconds.
-      function startRefresh(dialogueId) {
+      function startRefresh(dialogueURL) {
         // console.log("refreshing id", dialogueId, "every 10 seconds.");
-        dialogue = dialogueId;
+        dialogue = dialogueURL;
         stopRefresh();
 
         if (dialogue) {
           refresh = setTimeout(function() {
-            $.get(endpoint + dialogue + "/")
+            $.get(dialogue)
               .success(function(data) {
                 updateDialogueInformation(data);
-                startRefresh(data.id);
+                startRefresh(data.url);
               })
               .fail(function() {
                 console.log("Couldn't refresh data?!");
@@ -382,6 +391,41 @@
 
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
+
+      $("#interactiveForm").submit(function(e) {
+        e.preventDefault();
+        var question = $("#id_question").val();
+        if (!question) return;
+
+        var url  = dialogue + "questions/";
+        var data = {
+          "question": {
+            "text": question
+          }
+        }
+
+        $.ajax({
+          type: "POST",
+          url: url,
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        })
+          .success(function(data) {
+            window.location = "/reasoner/";
+          })
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not post question to dialogue:", textStatus, errorThrown);
+            var alert = Mustache.render(alerttmpl, {
+              "level": "danger",
+              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
+              "message": "Could not pose the question to the reasoner due to API error."
+            });
+            $("#alerts").append(alert);
+          })
+
+        return false;
+      })
 
       // Start refresh loop
       if (dialogue) {

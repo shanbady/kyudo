@@ -21,9 +21,10 @@ from rest_framework import viewsets
 from users.mixins import LoginRequired
 from django.views.generic import TemplateView
 
-from reasoner.models import Dialogue
+from reasoner.models import Dialogue, QuestionSeries
 from reasoner.serializers import DialogueSerializer
 from reasoner.serializers import DialogueCompleteSerializer
+from reasoner.serializers import QuestionSeriesSerializer
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -65,11 +66,52 @@ class DialogueViewSet(viewsets.ModelViewSet):
                 setattr(instance, attr, value)
             instance.save()
 
-            response = DialogueSerializer(instance).data
-            return Response(response)
+            response = DialogueSerializer(instance, context={'request': request})
+            return Response(response.data)
 
         else:
             return Response(
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @detail_route(methods=['get', 'post'], permission_classes=[IsAuthenticated])
+    def questions(self, request, pk=None):
+
+        return {
+            'GET': self.questions_get,
+            'POST': self.questions_post,
+        }[request.method](request, pk)
+
+    def questions_get(self, request, pk):
+        """
+        I hate this, I wish there was a better way of doing nested routing.
+        This method returns a list of the dialogue questions.
+        """
+        instance   = self.get_object()
+        serializer = QuestionSeriesSerializer(
+            instance.series.all(), many=True, context={'request': request}
+        )
+        return Response(serializer.data)
+
+    def questions_post(self, request, pk):
+        """
+        I hate this, I wish there was a better way of doing nested routing.
+        This method creates a new question for the dialogue.
+        """
+        instance   = self.get_object()
+        serializer = QuestionSeriesSerializer(
+            data=request.DATA, context={'request': request, 'dialogue': instance}
+        )
+
+        if serializer.is_valid():
+            # Save or update the QuestionSeries instance
+            serializer.save()
+
+            # Return the question data
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

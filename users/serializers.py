@@ -89,6 +89,23 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         return instance
 
 
+class SimpleUserSerializer(UserSerializer):
+
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = User
+        fields = (
+            'url', 'username', 'full_name',
+        )
+        extra_kwargs = {
+            'url': {'view_name': 'api:user-detail'}
+        }
+
+    def get_full_name(self, obj):
+        return obj.profile.full_name
+
+
 class PasswordSerializer(serializers.Serializer):
 
     password = serializers.CharField(max_length=200)

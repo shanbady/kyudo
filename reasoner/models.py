@@ -20,6 +20,7 @@ Models for the reasoner app.
 from django.db import models
 from datetime import datetime
 from kyudo.utils import nullable
+from django.core.urlresolvers import reverse
 from reasoner.managers import DialogueManager
 from reasoner.managers import QuestionSeriesManager
 from model_utils.models import TimeStampedModel
@@ -73,6 +74,12 @@ class Dialogue(models.Model):
         if struct:
             return delta
         return delta.total_seconds()
+
+    def get_api_detail_url(self):
+        """
+        Returns the API detail endpoint for the object
+        """
+        return reverse('api:dialogue-detail', args=(self.pk,))
 
     class Meta:
         db_table = "dialogues"

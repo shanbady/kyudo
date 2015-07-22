@@ -41,7 +41,7 @@ class Question(TimeStampedModel):
     details_rendered = models.TextField( editable=False, **nullable )             # HTML rendered details text from MD
     parse    = models.TextField( editable=False, **nullable )                     # The syntactic parse of the question text
     parse_time = models.FloatField( editable=False, **nullable )                  # The time it took to parse the question text
-    related  = models.ManyToManyField( 'self', editable=False )                   # Links between related questions
+    related  = models.ManyToManyField( 'self', editable=True )                   # Links between related questions
     template = models.ForeignKey(                                                 # Question template for similarity
                 'freebase.TextTemplate',
                 related_name='questions',
