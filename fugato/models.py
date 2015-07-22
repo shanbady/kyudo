@@ -23,6 +23,7 @@ from django.db import models
 from voting.models import Vote
 from kyudo.utils import nullable
 from autoslug import AutoSlugField
+from fugato.managers import QuestionManager
 from model_utils.models import TimeStampedModel
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.fields import GenericRelation
@@ -54,6 +55,9 @@ class Question(TimeStampedModel):
                 related_name='questions',
                 through='freebase.TopicAnnotation'
                )
+
+    ## Set custom manager on Question
+    objects  = QuestionManager()
 
     def get_absolute_url(self):
         """

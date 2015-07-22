@@ -17,7 +17,6 @@ API Serializers for the Reasoner app
 ## Imports
 ##########################################################################
 
-from kyudo.utils import signature
 from django.utils import timezone
 from fugato.models import Question
 from rest_framework import serializers
@@ -95,16 +94,7 @@ class DialogueQuestionSerializer(QuestionSerializer):
         Override the create method to deal with duplicate questions and
         other API-specific errors that can happen on Question creation.
         """
-
-        ## Check to make sure there is no duplicate
-        digest = signature(validated_data['text'])
-        query  = Question.objects.filter(hash=digest)
-        if query.exists():
-            ## Return the previously asked question
-            return query.first()
-
-        ## Create the model as before
-        return super(QuestionSerializer, self).create(validated_data)
+        return Question.objects.dedupe(**validated_data)
 
 
 ##########################################################################
@@ -125,18 +115,7 @@ class QuestionSeriesSerializer(serializers.ModelSerializer):
         """
         Create the question, then create the question series instance.
         """
-        question = validated_data.pop("question")
-        ## Check to make sure there is no duplicate
-        digest   = signature(question['text'])
-        query    = Question.objects.filter(hash=digest)
-
-        ## Get or create the Question
-        if query.exists():
-            ## Return the previously asked question
-            question = query.first()
-        else:
-            question = Question.objects.create(**question)
-
+        question, _ = Question.objects.dedupe(**validated_data.pop("question"))
         validated_data['dialogue'] = self.context.get('dialogue', None)
         validated_data['question'] = question
         return super(QuestionSeriesSerializer, self).create(validated_data)
