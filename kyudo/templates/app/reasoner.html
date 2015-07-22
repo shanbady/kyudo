@@ -61,7 +61,7 @@
               </tr>
               <tr>
                 <td>Subgoals</td>
-                <td>{{ dialogue.subgoals.count }}</td>
+                <td>{{ dialogue.series.subgoals.count }}</td>
               </tr>
             </tbody>
           </table>
@@ -137,20 +137,20 @@
         <div class="tab-content">
           <div id="interactive" class="tab-pane active">
 
-
-            <form id="interactiveForm">
-              <div class="form-group">
-                <label class="form-label" for="id_question">Question {{ label }}</label>
-                <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
-              </div>
-              <div class="form-group">
-                <select class="form-control">
-                  <option>Subgoal 1</option>
-                  <option>Subgoal 2</option>
-                </select>
-              </div>
-
-            </form>
+            <div class="goal-manager">
+              <form id="interactiveForm">
+                <div class="form-group">
+                  <label class="form-label" for="id_question">Question {{ label }}</label>
+                  <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
+                </div>
+                <div class="form-group">
+                  <select class="form-control">
+                    <option>Subgoal 1</option>
+                    <option>Subgoal 2</option>
+                  </select>
+                </div>
+              </form>
+            </div>
 
           </div><!-- interactive panel ends -->
 
@@ -263,6 +263,47 @@
         return jump[toggle](target, button);
       };
 
+      // Handle adding new questions via the interactive form
+      function onInteractiveSubmit(e) {
+        e.preventDefault();
+        var question = $("#id_question").val();
+        if (!question) return;
+        if (!dialogue) {
+          showAlert({
+            "level": "warning",
+            "notice": "<i class=\"fa fa-info-circle\"></i> Dialogues:",
+            "message": "In order to pose questions to the reasoner, please start a dialogue."
+          });
+          return;
+        }
+
+        var url  = dialogue + "questions/";
+        var data = {
+          "question": {
+            "text": question
+          }
+        }
+
+        $.ajax({
+          type: "POST",
+          url: url,
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        })
+          .success(function(data) {
+            window.location = "/reasoner/";
+          })
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not post question to dialogue:", textStatus, errorThrown);
+            showAlert({
+              "message": "Could not pose the question to the reasoner due to API error."
+            });
+          })
+
+        return false;
+      }
+
       // Handle all the logic for starting the dialogue
       function startDialogue(target, button) {
         data = {}
@@ -294,12 +335,9 @@
           })
           .fail(function(jqXHR, textStatus, errorThrown ) {
             console.log("Could not start the dialogue:", textStatus, errorThrown);
-            var alert = Mustache.render(alerttmpl, {
-              "level": "danger",
-              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
+            showAlert({
               "message": "Could not start the dialogue due to API error."
             });
-            $("#alerts").append(alert);
           });
       }
 
@@ -328,15 +366,13 @@
 
             // Stop the refresh
             stopRefresh();
+            dialogue = null;
           })
           .fail(function(jqXHR, textStatus, errorThrown ) {
             console.log("Could not stop the dialogue:", textStatus, errorThrown);
-            var alert = Mustache.render(alerttmpl, {
-              "level": "danger",
-              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
+            showAlert({
               "message": "Could not stop the dialogue due to API error."
             });
-            $("#alerts").append(alert);
           })
       }
 
@@ -389,43 +425,20 @@
         }
       }
 
+      // Helper function add an alert.
+      function showAlert(view) {
+        _.defaults(view, {
+          level: "danger",
+          notice: "<i class=\"fa fa-warning\"></i> Bad Things!",
+          message: "Something went wrong in the application!"
+        });
+        var alert = Mustache.render(alerttmpl, view);
+        $("#alerts").append(alert);
+      }
+
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
-
-      $("#interactiveForm").submit(function(e) {
-        e.preventDefault();
-        var question = $("#id_question").val();
-        if (!question) return;
-
-        var url  = dialogue + "questions/";
-        var data = {
-          "question": {
-            "text": question
-          }
-        }
-
-        $.ajax({
-          type: "POST",
-          url: url,
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(data)
-        })
-          .success(function(data) {
-            window.location = "/reasoner/";
-          })
-          .fail(function(jqXHR, textStatus, errorThrown ) {
-            console.log("Could not post question to dialogue:", textStatus, errorThrown);
-            var alert = Mustache.render(alerttmpl, {
-              "level": "danger",
-              "notice": "<i class=\"fa fa-warning\"></i> Bad Things!",
-              "message": "Could not pose the question to the reasoner due to API error."
-            });
-            $("#alerts").append(alert);
-          })
-
-        return false;
-      })
+      $("#interactiveForm").submit(onInteractiveSubmit);
 
       // Start refresh loop
       if (dialogue) {

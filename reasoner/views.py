@@ -100,6 +100,12 @@ class DialogueViewSet(viewsets.ModelViewSet):
         This method creates a new question for the dialogue.
         """
         instance   = self.get_object()
+        if instance.finished:
+            return Response(
+                {"success": False, "error": "session is finished"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = QuestionSeriesSerializer(
             data=request.DATA, context={'request': request, 'dialogue': instance}
         )

@@ -55,9 +55,6 @@ class Dialogue(models.Model):
             not self.completed and not self.terminated
         )
 
-    def subgoals(self):
-        return self.questions.through.objects.subgoals()
-
     def duration(self, struct=False):
         """
         Returns the number of seconds the dialoge lasted, or the current
