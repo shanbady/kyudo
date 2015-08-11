@@ -1,0 +1,553 @@
+{% extends 'page.html' %}
+{% load humanize %}
+{# Basic Prototype of the Case Reasoner #}
+
+{% block content %}
+
+  <div id="reasonerPrototypeApp" class="container">
+
+    <!-- alerts and messages row -->
+    <div class="row">
+      <div class="col-xs-12">
+        <div id="alerts"></div>
+      </div>
+    </div>
+
+    <!-- two columns row -->
+    <div class="row">
+
+      <!-- left sidebar -->
+      <div class="col-sm-3">
+
+        <!-- Dialogue Information Panel -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">Dialogue Information</div>
+          </div>
+
+          {% if not dialogue %}
+          <div class="panel-body">
+            <p class="text-muted">You can start your first dialogue by pressing the "Start Dialogue" button.</p>
+            <p class="text-muted">This panel will display information about the current investigative session.</p>
+          </div>
+          {% endif %}
+          <table id="dialogueInformationTable" class="table{% if not dialogue %} hidden{% endif %}">
+            <tbody>
+              <tr>
+                <td>Started</td>
+                <td>
+                  {% if dialogue.active %}
+                  {{ dialogue.started|naturaltime }}
+                  {% else %}
+                  {{ dialogue.started|date:"M j, Y \a\t h:i A" }}
+                  {% endif %}
+                </td>
+              </tr>
+              {% if dialogue and not dialogue.active %}
+              <tr>
+                <td>Finished</td>
+                <td>
+                  {{ dialogue.finished|date:"M j, Y \a\t h:i A" }}
+                </td>
+              </tr>
+              <tr>
+                <td>Duration</td>
+                <td>{{ dialogue.started|timesince:dialogue.finished }}</td>
+              </tr>
+              {% endif %}
+              <tr>
+                <td>Questions</td>
+                <td>{{ dialogue.questions.count }}</td>
+              </tr>
+              <tr>
+                <td>Subgoals</td>
+                <td>{{ dialogue.series.subgoals.count }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div><!-- dialogue information panel ends -->
+
+        <!-- Context Panel -->
+
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">User Context</h4>
+            </div><!-- end panel heading -->
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td>User</td>
+                  <td>{{ user.first_name }} {{ user.last_name }}</td>
+                </tr>
+                <tr>
+                  <td>Current Time</td>
+                  <td>{% now "M j, Y \a\t h:i A" %}</td>
+                </tr>
+                <tr>
+                  <td>GPS Location</td>
+                  <td>
+                    <span class="hidden gps">
+                      (<span class="latitude"></span>, <span class="longitude"></span>)
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table><!-- end panel body -->
+            <div class="panel-footer">
+              <small class="text-muted pull-right">
+                <i class="fa fa-map-marker"></i>
+                <span class="gps-status-info">loading GPS info &hellip;</span>
+              </small>
+              <div class="clearfix"></div>
+            </div><!-- end panel footer -->
+          </div><!-- end context panel -->
+
+      </div><!-- left sidebar ends -->
+
+      <!-- right sidebar -->
+      <div class="col-sm-9">
+
+
+        <div class="dialogue-controls">
+          <!-- Dialogue Toggle Button -->
+          {% if dialogue.active %}
+          <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                  data-toggle="stop" data-target="{{ dialogue.get_api_detail_url }}">
+            <i class="fa fa-stop"></i> Stop Dialogue
+          </button>
+          {% else %}
+          <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                  data-toggle="start" data-target="">
+            <i class="fa fa-play-circle"></i> Start Dialogue
+          </button>
+          {% endif %}
+        </div>
+
+        <ul class="nav nav-tabs">
+          <li class="active">
+            <a href="#interactive" data-toggle="tab">
+              <i class="fa fa-comment"></i> Interactive
+            </a>
+          </li>
+          <li>
+            <a href="#history" data-toggle="tab">
+              <i class="fa fa-history"></i> History
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <div id="interactive" class="tab-pane active">
+
+            <div class="goal-manager">
+
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <h5>Current Goals</h5>
+                  <ul class="list-unstyled">
+                    <li id="current-goal">
+                      <strong>Investigate:</strong>
+                      <a class="goal" title="View Goal Detail" target="_blank" href="{{ dialogue.current_goal.question.get_absolute_url }}">
+                        {{ dialogue.current_goal.question }}
+                      </a>
+                    </li>
+                    <li id="current-subgoal">
+                      <strong>Subgoal:</strong>
+                      <a class="goal" title="View Goal Detail" target="_blank" href="{{ dialogue.current_subgoal.question.get_absolute_url }}">
+                        {{ dialogue.current_subgoal.question }}
+                      </a>
+                    </li>
+                  </ul>
+                  <hr />
+                  <h5>Select Next Goal</h5>
+                  <form id="interactiveForm">
+                    <div class="form-group">
+                      <label class="form-label" for="id_question">Enter Question</label>
+                      <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
+                    </div>
+                    <div class="form-group">
+                      <label class="radio-inline">
+                        <input type="radio" name="goaltype" id="goaltype1" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
+                      </label>
+                      <label class="radio-inline">
+                        <input type="radio" name="goaltype" id="goaltype2" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <p><strong>Or</strong></p>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="id_subgoal_select">Select Related</label>
+                      <select id="id_subgoal_select" name="question" class="form-control">
+                        {% for related in dialogue.series.latest.question.related.all %}
+                        <option value="{{ related.id }}">{{ related }}</option>
+                        {% empty %}
+                        <option></option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Hidden Fields -->
+                    <input type="hidden" id="id_current_goal" name="current_goal" value="{{ dialogue.current_goal.question.id }}" />
+                    <input type="hidden" id="id_current_subgoal" name="current_subgoal" value="{{ dialogue.current_subgoal.question.id }}" />
+                  </form>
+
+                </div>
+              </div>
+            </div>
+
+          </div><!-- interactive panel ends -->
+
+          <div id="history" class="tab-pane">
+
+            <div class="well">
+              <!-- Activity Log -->
+              <ul id="activity-history" class="list-unstyled">
+              {% for question in dialogue.series.all %}
+                <li>
+                  <span class="text-muted"><small>{{ dialogue.started|timesince:question.created }} after start</small></span><br />
+                  <a href="{{ question.question.get_absolute_url }}">{{ question.question }}</a>
+                </li>
+              {% empty %}
+                <li>No activities recorded yet</li>
+              {% endfor %}
+              </ul><!-- end activity log -->
+            </div>
+
+          </div><!-- interactive panel ends -->
+
+        </div><!-- tab-content ends -->
+
+        <div class="clearfix"></div>
+      </div><!-- right sidebar ends -->
+
+    </div><!-- two columns row ends -->
+
+  </div><!-- #reasonerPrototypeApp ends -->
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <!-- Templates -->
+  <script id="tmplBtnToggleDialogue" type="x-tmpl-mustache">
+    {% verbatim %}
+    <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+            data-toggle="{{ toggle }}" data-target="{{ target }}">
+      <i class="fa {{ icon }}"></i> {{ label }}
+    </button>
+    {% endverbatim %}
+  </script>
+
+  <script id="tmplDialogueInformation" type="x-tmpl-mustache">
+    {% verbatim %}
+    <tbody>
+      <tr>
+        <td>Started</td>
+        <td>{{ started }}</td>
+      </tr>
+      {{ ^active }}
+      <tr>
+        <td>Finished</td>
+        <td>
+          {{ finished }}
+        </td>
+      </tr>
+      <tr>
+        <td>Duration</td>
+        <td>{{ duration }}</td>
+      </tr>
+      {{ /active }}
+      <tr>
+        <td>Questions</td>
+        <td>{{ num_questions }}</td>
+      </tr>
+      <tr>
+        <td>Subgoals</td>
+        <td>{{ num_subgoals }}</td>
+      </tr>
+    {% endverbatim %}
+  </script>
+
+  <script id="tmplAlert" type="x-tmpl-mustache">
+    {% verbatim %}
+    <div class="alert alert-dismissible alert-{{ level }}" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>{{ &notice }}</strong> {{ message }}
+    </div>
+    {% endverbatim %}
+  </script>
+
+  <!-- Additional dependencies -->
+
+
+  <!-- Primary Logics -->
+  <script type="text/javascript">
+    $(function() {
+
+      var refresh; // Timer for refreshing dialogue data
+
+      var user      = "{{ user.profile.get_api_detail_url }}";
+      var dialogue  = "{% if dialogue.active %}{{ dialogue.get_api_detail_url }}{% endif %}";
+      var endpoint  = "{% url 'api:dialogue-list' %}";
+      var datetimeFormat = "MMM D, YYYY [at] h:mm A";
+
+      // Templates
+      var btntmpl   = $("#tmplBtnToggleDialogue").html();
+      var infotmpl  = $("#tmplDialogueInformation").html();
+      var alerttmpl = $("#tmplAlert").html();
+
+      // Start and stop the dialogue with the toggle button
+      function onToggleDialogue(e) {
+        var button = $(e.target);
+        var toggle = button.data('toggle');
+        var target = button.data('target');
+
+        var jump   = {
+          "start": startDialogue,
+          "stop":  stopDialogue
+        }
+
+        return jump[toggle](target, button);
+      };
+
+      // Handle adding new questions via the interactive form
+      function onInteractiveSubmit(e) {
+        e.preventDefault();
+        var question = $("#id_question").val();
+        var is_subgoal = $("input[name=goaltype]:checked").val() == "subgoal";
+        var parent_goal = is_subgoal ? parseInt($("#id_current_goal").val()) : '';
+
+        if (!question) return;
+        if (!dialogue) {
+          showAlert({
+            "level": "warning",
+            "notice": "<i class=\"fa fa-info-circle\"></i> Dialogues:",
+            "message": "In order to pose questions to the reasoner, please start a dialogue."
+          });
+          return;
+        }
+
+        var url  = dialogue + "questions/";
+        var data = {
+          "parent_goal": parent_goal,
+          "is_subgoal": is_subgoal,
+          "question": {
+            "text": question
+          }
+        }
+
+        console.log(data);
+
+        $.ajax({
+          type: "POST",
+          url: url,
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        })
+          .success(function(data) {
+            window.location = "/reasoner/";
+          })
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not post question to dialogue:", textStatus, errorThrown);
+            showAlert({
+              "message": "Could not pose the question to the reasoner due to API error."
+            });
+          })
+
+        return false;
+      }
+
+      // Handle the selection of subgoals in the interactive form
+      function onSubgoalSelect(e) {
+        console.log("selected!");
+      }
+
+      // Handle all the logic for starting the dialogue
+      function startDialogue(target, button) {
+        data = {}
+
+        $.post(endpoint, data)
+          .success(function(data) {
+
+            // Replace the start dialogue panel if it exists
+            if ($("#dialogueInformationTable").hasClass("hidden")) {
+              var table = $("#dialogueInformationTable");
+              table.removeClass("hidden");
+              table.siblings('.panel-body').remove();
+            }
+
+            // Create button view data
+            var btnview = {
+              "toggle": "stop",
+              "target": data.url,
+              "icon": "fa-stop",
+              "label": "Stop Dialogue"
+            };
+
+            // Update the UI with the new information.
+            button.replaceWith(Mustache.render(btntmpl, btnview));
+            updateDialogueInformation(data);
+
+            // Clear the interactive form to a fresh state
+            $("#goaltype1").removeAttr("checked");
+            $("#goaltype2").attr("checked", "checked");
+            $("a.goal").attr("href", "").text("");
+            $("#id_subgoal_select").empty();
+            $("#activity-history").empty();
+
+            // Start refresh timeout
+            startRefresh(data.url);
+          })
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not start the dialogue:", textStatus, errorThrown);
+            showAlert({
+              "message": "Could not start the dialogue due to API error."
+            });
+          });
+      }
+
+      // Handle all the logic for stopping the dialogue
+      function stopDialogue(target, button) {
+        var url  = target + "complete/";
+        var data = {
+          "successful": true,
+          "completed": true
+        }
+
+        $.post(url, data)
+          .success(function(data) {
+
+            // Create button view data
+            var view = {
+              "toggle": "start",
+              "target": "",
+              "icon": "fa-play-circle",
+              "label": "Start Dialogue"
+            };
+
+            // Update the UI
+            button.replaceWith(Mustache.render(btntmpl, view));
+            updateDialogueInformation(data);
+
+            // Stop the refresh
+            stopRefresh();
+            dialogue = null;
+          })
+          .fail(function(jqXHR, textStatus, errorThrown ) {
+            console.log("Could not stop the dialogue:", textStatus, errorThrown);
+            showAlert({
+              "message": "Could not stop the dialogue due to API error."
+            });
+          })
+      }
+
+      // Helper function to update the dialogue information table
+      function updateDialogueInformation(data) {
+
+        data.num_questions = data.questions.length;
+        data.num_subgoals  = 0;
+        data.started       = moment(data.started);
+        data.finished      = moment(data.finished);
+        data.duration      = moment.duration(data.finished - data.started).humanize();
+
+        if (data.active) {
+          data.started  = data.started.fromNow();
+        } else {
+          data.started  = data.started.format(datetimeFormat);
+          data.finished = data.finished.format(datetimeFormat);
+        }
+
+        $("#dialogueInformationTable").html(Mustache.render(infotmpl, data));
+      }
+
+      // Refresh the dialogue information every 10 seconds.
+      function startRefresh(dialogueURL) {
+        // console.log("refreshing id", dialogueId, "every 10 seconds.");
+        dialogue = dialogueURL;
+        stopRefresh();
+
+        if (dialogue) {
+          refresh = setTimeout(function() {
+            $.get(dialogue)
+              .success(function(data) {
+                updateDialogueInformation(data);
+                startRefresh(data.url);
+              })
+              .fail(function() {
+                console.log("Couldn't refresh data?!");
+                stopRefresh();
+              });
+
+          }, 10000);
+        }
+      }
+
+      // Stop the refresh cycle.
+      function stopRefresh() {
+        if (refresh) {
+          clearTimeout(refresh);
+          refresh = null;
+        }
+      }
+
+      // Helper function add an alert.
+      function showAlert(view) {
+        _.defaults(view, {
+          level: "danger",
+          notice: "<i class=\"fa fa-warning\"></i> Bad Things!",
+          message: "Something went wrong in the application!"
+        });
+        var alert = Mustache.render(alerttmpl, view);
+        $("#alerts").append(alert);
+      }
+
+      // Event Bindings
+      $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
+      $("#id_subgoal_select").change(onSubgoalSelect);
+      $("#interactiveForm").submit(onInteractiveSubmit);
+
+      // Start refresh loop
+      if (dialogue) {
+        startRefresh(dialogue);
+      }
+
+      // Handle GPS Coordinates in context
+      navigator.geolocation.getCurrentPosition(GetLocation);
+      function GetLocation(location) {
+        // Set hidden form fields
+        $("#geo_latitude").val(location.coords.latitude);
+        $("#geo_longitude").val(location.coords.longitude);
+        $("#geo_accuracy").val(location.coords.accuracy);
+
+        // Set display fields if they exist
+        $("span.latitude").text(location.coords.latitude.toFixed(6));
+        $("span.longitude").text(location.coords.longitude.toFixed(6));
+        $("span.gps").removeClass("hidden");
+        $("span.gps-status-info").text("GPS Fix.");
+
+        console.log("GPS coordinates acquired.");
+      }
+
+      // Create the question suggestion engine
+      var suggestions = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: "{% url 'api:typeahead-list' %}"
+      });
+
+      // Set typeahead for the question text box.
+      $("input[name=question]").typeahead({
+        hint: true,
+        highlight: true,
+        minLength: 1
+      }, {
+        name: 'suggestions',
+        source: suggestions
+      });
+
+    });
+
+  </script>
+{% endblock %}
