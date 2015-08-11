@@ -109,7 +109,8 @@ class QuestionSeriesSerializer(serializers.ModelSerializer):
                )
 
     class Meta:
-        model = QuestionSeries
+        model  = QuestionSeries
+        fields = ('question', 'dialogue', 'is_subgoal', 'parent_goal')
 
     def create(self, validated_data):
         """

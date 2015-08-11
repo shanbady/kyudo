@@ -55,6 +55,23 @@ class Dialogue(models.Model):
             not self.completed and not self.terminated
         )
 
+    def current_goal(self):
+        """
+        Computes the current top level goal from the question series, defined
+        as the latest goal that is not a subgoal of another goal. Returns
+        None if no goal matches this query. Dialogues should always have a
+        top level goal, usually the first goal in the dialogue.
+        """
+        return self.series.filter(is_subgoal=False).latest()
+
+    def current_subgoal(self):
+        """
+        Computes the current sub goal from the question series, defined as
+        the most recent subgoal that is a child of the current goal.
+        Returns None if no goal matches this query.
+        """
+        return self.series.filter(is_subgoal=True, parent_goal=self.current_goal().question).latest()
+
     def duration(self, struct=False):
         """
         Returns the number of seconds the dialoge lasted, or the current

@@ -108,18 +108,21 @@
       <!-- right sidebar -->
       <div class="col-sm-9">
 
-        <!-- Dialogue Toggle Button -->
-        {% if dialogue.active %}
-        <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
-                data-toggle="stop" data-target="{{ dialogue.get_api_detail_url }}">
-          <i class="fa fa-stop"></i> Stop Dialogue
-        </button>
-        {% else %}
-        <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
-                data-toggle="start" data-target="">
-          <i class="fa fa-play-circle"></i> Start Dialogue
-        </button>
-        {% endif %}
+
+        <div class="dialogue-controls">
+          <!-- Dialogue Toggle Button -->
+          {% if dialogue.active %}
+          <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                  data-toggle="stop" data-target="{{ dialogue.get_api_detail_url }}">
+            <i class="fa fa-stop"></i> Stop Dialogue
+          </button>
+          {% else %}
+          <button id="btnToggleDialogue" class="btn btn-default btn-sm pull-right"
+                  data-toggle="start" data-target="">
+            <i class="fa fa-play-circle"></i> Start Dialogue
+          </button>
+          {% endif %}
+        </div>
 
         <ul class="nav nav-tabs">
           <li class="active">
@@ -138,18 +141,60 @@
           <div id="interactive" class="tab-pane active">
 
             <div class="goal-manager">
-              <form id="interactiveForm">
-                <div class="form-group">
-                  <label class="form-label" for="id_question">Question {{ label }}</label>
-                  <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
+
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <h5>Current Goals</h5>
+                  <ul class="list-unstyled">
+                    <li id="current-goal">
+                      <strong>Investigate:</strong>
+                      <a class="goal" title="View Goal Detail" target="_blank" href="{{ dialogue.current_goal.question.get_absolute_url }}">
+                        {{ dialogue.current_goal.question }}
+                      </a>
+                    </li>
+                    <li id="current-subgoal">
+                      <strong>Subgoal:</strong>
+                      <a class="goal" title="View Goal Detail" target="_blank" href="{{ dialogue.current_subgoal.question.get_absolute_url }}">
+                        {{ dialogue.current_subgoal.question }}
+                      </a>
+                    </li>
+                  </ul>
+                  <hr />
+                  <h5>Select Next Goal</h5>
+                  <form id="interactiveForm">
+                    <div class="form-group">
+                      <label class="form-label" for="id_question">Enter Question</label>
+                      <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
+                    </div>
+                    <div class="form-group">
+                      <label class="radio-inline">
+                        <input type="radio" name="goaltype" id="goaltype1" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
+                      </label>
+                      <label class="radio-inline">
+                        <input type="radio" name="goaltype" id="goaltype2" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <p><strong>Or</strong></p>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="id_subgoal_select">Select Related</label>
+                      <select id="id_subgoal_select" name="question" class="form-control">
+                        {% for related in dialogue.series.latest.question.related.all %}
+                        <option value="{{ related.id }}">{{ related }}</option>
+                        {% empty %}
+                        <option></option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Hidden Fields -->
+                    <input type="hidden" id="id_current_goal" name="current_goal" value="{{ dialogue.current_goal.question.id }}" />
+                    <input type="hidden" id="id_current_subgoal" name="current_subgoal" value="{{ dialogue.current_subgoal.question.id }}" />
+                  </form>
+
                 </div>
-                <div class="form-group">
-                  <select class="form-control">
-                    <option>Subgoal 1</option>
-                    <option>Subgoal 2</option>
-                  </select>
-                </div>
-              </form>
+              </div>
             </div>
 
           </div><!-- interactive panel ends -->
@@ -158,7 +203,7 @@
 
             <div class="well">
               <!-- Activity Log -->
-              <ul class="list-unstyled">
+              <ul id="activity-history" class="list-unstyled">
               {% for question in dialogue.series.all %}
                 <li>
                   <span class="text-muted"><small>{{ dialogue.started|timesince:question.created }} after start</small></span><br />
@@ -267,6 +312,9 @@
       function onInteractiveSubmit(e) {
         e.preventDefault();
         var question = $("#id_question").val();
+        var is_subgoal = $("input[name=goaltype]:checked").val() == "subgoal";
+        var parent_goal = is_subgoal ? parseInt($("#id_current_goal").val()) : '';
+
         if (!question) return;
         if (!dialogue) {
           showAlert({
@@ -279,10 +327,14 @@
 
         var url  = dialogue + "questions/";
         var data = {
+          "parent_goal": parent_goal,
+          "is_subgoal": is_subgoal,
           "question": {
             "text": question
           }
         }
+
+        console.log(data);
 
         $.ajax({
           type: "POST",
@@ -302,6 +354,11 @@
           })
 
         return false;
+      }
+
+      // Handle the selection of subgoals in the interactive form
+      function onSubgoalSelect(e) {
+        console.log("selected!");
       }
 
       // Handle all the logic for starting the dialogue
@@ -329,6 +386,13 @@
             // Update the UI with the new information.
             button.replaceWith(Mustache.render(btntmpl, btnview));
             updateDialogueInformation(data);
+
+            // Clear the interactive form to a fresh state
+            $("#goaltype1").removeAttr("checked");
+            $("#goaltype2").attr("checked", "checked");
+            $("a.goal").attr("href", "").text("");
+            $("#id_subgoal_select").empty();
+            $("#activity-history").empty();
 
             // Start refresh timeout
             startRefresh(data.url);
@@ -438,6 +502,7 @@
 
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
+      $("#id_subgoal_select").change(onSubgoalSelect);
       $("#interactiveForm").submit(onInteractiveSubmit);
 
       // Start refresh loop
