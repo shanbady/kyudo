@@ -115,6 +115,15 @@ class SimilarityView(LoginRequired, TemplateView):
 ## API HTTP/JSON Views
 ##########################################################################
 
+class QuestionTypeaheadViewSet(viewsets.ViewSet):
+    """
+    Endpoint for returning a typeahead of question texts.
+    """
+
+    def list(self, request):
+        queryset = Question.objects.values_list('text', flat=True)
+        return Response(queryset)
+
 class QuestionViewSet(viewsets.ModelViewSet):
 
     queryset = Question.objects.order_by('-created')

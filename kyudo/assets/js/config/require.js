@@ -20,7 +20,8 @@ requirejs.config({
     'backbone': '//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.1/backbone-min',
     'text': '//cdnjs.cloudflare.com/ajax/libs/require-text/2.0.12/text.min',
     'mustache': '//cdnjs.cloudflare.com/ajax/libs/mustache.js/2.1.2/mustache.min',
-    'moment': '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min'
+    'moment': '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min',
+    'typeahead': '//cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min',
   },
   shim: {
     'underscore': {
@@ -35,6 +36,10 @@ requirejs.config({
     },
     'bootstrap': {
       deps: ['jquery']
+    },
+    'typeahead': {
+      deps: ['jquery'],
+      exports: 'Bloodhound'
     }
   }
 });

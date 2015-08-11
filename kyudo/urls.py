@@ -43,6 +43,7 @@ router.register(r'parse', ParserViewSet, "parse")
 router.register(r'status', HeartbeatViewSet, "status")
 router.register(r'annotations', TopicAnnotationViewSet, "annotation")
 router.register(r'dialogues', DialogueViewSet, "dialogue")
+router.register(r'typeahead', QuestionTypeaheadViewSet, "typeahead")
 
 ##########################################################################
 ## URL Patterns for the app

@@ -278,6 +278,9 @@
     {% endverbatim %}
   </script>
 
+  <!-- Additional dependencies -->
+
+
   <!-- Primary Logics -->
   <script type="text/javascript">
     $(function() {
@@ -526,6 +529,23 @@
 
         console.log("GPS coordinates acquired.");
       }
+
+      // Create the question suggestion engine
+      var suggestions = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: "{% url 'api:typeahead-list' %}"
+      });
+
+      // Set typeahead for the question text box.
+      $("input[name=question]").typeahead({
+        hint: true,
+        highlight: true,
+        minLength: 1
+      }, {
+        name: 'suggestions',
+        source: suggestions
+      });
 
     });
 
