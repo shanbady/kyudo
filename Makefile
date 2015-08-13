@@ -27,7 +27,7 @@ DJANGO_TEST_POSTFIX := --settings=$(DJANGO_TEST_SETTINGS_MODULE) --pythonpath=$(
 APPS := freebase fugato users voting reasoner
 
 # Export targets not associated with files
-.PHONY: test showenv coverage bootstrap pip virtualenv clean virtual_env_set
+.PHONY: test showenv coverage bootstrap pip virtualenv clean virtual_env_set truncate
 
 # Show Virtual Environment
 showenv:
@@ -62,3 +62,7 @@ clean:
 test:
 	$(PYTHON_BIN)/coverage run --source=$(LOCALPATH) $(DJANGO_ADMIN) test $(LOCALPATH) $(DJANGO_TEST_POSTFIX)
 	- $(PYTHON_BIN)/coverage report
+
+# Truncate the Dialogues table
+truncate:
+	psql -d kyudo -c "TRUNCATE dialogues RESTART IDENTITY CASCADE"

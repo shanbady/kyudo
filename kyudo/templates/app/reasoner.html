@@ -168,32 +168,61 @@
                       <label class="form-label" for="id_question">Enter Question</label>
                       <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
                     </div>
-                    <div class="form-group">
-                      <label class="radio-inline">
-                        <input type="radio" name="goaltype" id="goaltype1" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
-                      </label>
-                      <label class="radio-inline">
-                        <input type="radio" name="goaltype" id="goaltype2" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
-                      </label>
+                    <div class="form-group row">
+                      <div class="col-xs-8">
+                        <label class="radio-inline">
+                          <input type="radio" name="goaltype" id="goaltype_subgoal" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
+                        </label>
+                        <label class="radio-inline">
+                          <input type="radio" name="goaltype" id="goaltype_newgoal" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
+                        </label>
+                      </div>
+                      <div class="col-xs-4">
+                        <button type="submit" class="btn btn-primary btn-xs pull-right">Submit</button>
+                      </div>
+                      <div class="clearfix"></div>
                     </div>
-                    <div class="form-group">
-                      <p><strong>Or</strong></p>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="id_subgoal_select">Select Related</label>
-                      <select id="id_subgoal_select" name="question" class="form-control">
-                        {% for related in dialogue.series.latest.question.related.all %}
-                        <option value="{{ related.id }}">{{ related }}</option>
-                        {% empty %}
-                        <option></option>
-                        {% endfor %}
-                      </select>
-                    </div>
-
                     <!-- Hidden Fields -->
                     <input type="hidden" id="id_current_goal" name="current_goal" value="{{ dialogue.current_goal.question.id }}" />
                     <input type="hidden" id="id_current_subgoal" name="current_subgoal" value="{{ dialogue.current_subgoal.question.id }}" />
                   </form>
+
+                  <hr />
+
+                  <div class="row">
+                    <div class="col-sm-6">
+                      <h5><i class="fa fa-sitemap"></i> Consider the following related subgoals:</h5>
+                      <ul class="list-unstyled" id="id_subgoal_select">
+                        {% for related in dialogue.series.latest.question.related.all %}
+                        <li>
+                          <a class="text-info subgoal goal-select"
+                             href="{{ related.get_absolute_url }}" target="_blank"
+                             data-question-id="{{ related.id }}">
+                             {{ related }}
+                           </a>
+                        </li>
+                        {% empty %}
+                        <li>No Related Goals</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    <div class="col-sm-6">
+                      <h5><i class="fa fa-code-fork"></i> Consider the following goal changes:</h5>
+                      <ul class="list-unstyled" id="id_goal_trajectory_select">
+                        {% for related in dialogue.suggestions %}
+                        <li>
+                          <a href="{{ related.get_absolute_url }}" target="_blank"
+                             class="newgoal goal-select"
+                             data-question-id="{{ related.id }}">
+                             {{ related }}
+                          </a>
+                        </li>
+                        {% empty %}
+                        <li>No Similar Goals</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  </div>
 
                 </div>
               </div>
@@ -362,8 +391,21 @@
       }
 
       // Handle the selection of subgoals in the interactive form
-      function onSubgoalSelect(e) {
-        console.log("selected!");
+      function onGoalSelect(e) {
+        e.preventDefault();
+        var target = $(e.target);
+
+        var isSubgoal = target.hasClass('subgoal');
+        if (isSubgoal) {
+          $("input[name=goaltype][value=subgoal]").prop("checked", true);
+        } else {
+          $("input[name=goaltype][value=newgoal]").prop("checked", true);
+        }
+
+        $("#id_question").val(target.text().trim());
+        $("#interactiveForm").submit();
+
+        return false;
       }
 
       // Handle all the logic for starting the dialogue
@@ -393,8 +435,7 @@
             updateDialogueInformation(data);
 
             // Clear the interactive form to a fresh state
-            $("#goaltype1").removeAttr("checked");
-            $("#goaltype2").attr("checked", "checked");
+            $("input[name=goaltype][value=newgoal]").prop("checked", true);
             $("a.goal").attr("href", "").text("");
             $("#id_subgoal_select").empty();
             $("#activity-history").empty();
@@ -507,7 +548,7 @@
 
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
-      $("#id_subgoal_select").change(onSubgoalSelect);
+      $(".goal-select").click(onGoalSelect);
       $("#interactiveForm").submit(onInteractiveSubmit);
 
       // Start refresh loop
@@ -555,9 +596,9 @@
 
         });
 
-    } else {
-        document.getElementById('google_canvas').innerHTML = '<p>No Geolocation Support.</p>';
-    }
+      } else {
+          document.getElementById('google_canvas').innerHTML = '<p>No Geolocation Support.</p>';
+      }
 
       // Create the question suggestion engine
       var suggestions = new Bloodhound({
@@ -574,6 +615,13 @@
       }, {
         name: 'suggestions',
         source: suggestions
+      });
+
+      // Rebind enter to submit the form
+      $("input[name=question]").keypress(function(event) {
+          if (event.which == 13) {
+              $("#interactiveForm").submit();
+          }
       });
 
     });
