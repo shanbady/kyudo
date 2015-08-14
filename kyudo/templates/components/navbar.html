@@ -24,6 +24,7 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reasoning Tools <span class="caret"></span></a>
             <ul class="dropdown-menu">
+              <li><a href="{% url 'app-reasoner-prototype' %}"><i class="fa fa-cube"></i> Reasoner Prototype</a></li>
               <li><a href="{% url 'app-similarity' %}"><i class="fa fa-puzzle-piece"></i> Similarity</a></li>
               <li role="separator" class="divider"></li>
               <li><a href="{% url 'app-debug' %}"><i class="fa fa-plug"></i> Debugging</a></li>
@@ -44,27 +45,47 @@
             <ul class="dropdown-menu">
               {% if user.is_staff %}
               <li class="dropdown-header">Administration</li>
-              <li><a href="{% url 'admin:index' %}">
-                <i class="fa fa-cog"></i> Management
+              <li>
+                <a href="{% url 'admin:index' %}">
+                  <i class="fa fa-cog"></i> Management
                 </a>
               </li>
-              <li><a href="{% url 'api:api-root' %}"><i class="fa fa-cogs"></i> API Docs</a></li>
+              <li>
+                <a href="{% url 'api:api-root' %}">
+                  <i class="fa fa-cogs"></i> API Docs
+                </a>
+              </li>
               <li class="sep"></li>
               {% endif %}
               <li class="dropdown-header">User Settings</li>
-              <li><a href="{% url 'profile' %}"><i class="fa fa-user"></i> View Profile</a></li>
-              <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out"></i>  Log out</a></li>
+              <li>
+                <a href="{% url 'profile' %}">
+                  <i class="fa fa-user"></i> View Profile
+                </a>
+              </li>
+              <li>
+                <a href="{% url 'auth:logout' %}">
+                  <i class="fa fa-sign-out"></i>  Log out
+                </a>
+              </li>
             </ul>
           </li>
           <li>
-            <button id="btnAskQuestion" type="button" class="btn btn-primary navbar-btn btn-sm"
+            <button id="btnAskQuestion" type="button"
+                    class="btn btn-primary navbar-btn btn-sm"
+                    style="margin-right: 15px"
                     data-toggle="modal" data-target="#askQuestionModal">
-            <i class="fa fa-question-circle"></i>
+              <i class="fa fa-question-circle"></i>
               Ask Question
             </button>
           </li>
           {% else %}
-          <li><a href="{% url 'social:begin' 'google-oauth2' %}"><i class="fa fa-google-plus-square"></i> Log in with Google</a></li>
+          <li>
+            <a href="{% url 'social:begin' 'google-oauth2' %}">
+              <i class="fa fa-google-plus-square"></i>
+              Log in with Google
+            </a>
+          </li>
           {% endif %}
         </ul>
 

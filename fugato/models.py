@@ -23,6 +23,7 @@ from django.db import models
 from voting.models import Vote
 from kyudo.utils import nullable
 from autoslug import AutoSlugField
+from fugato.managers import QuestionManager
 from model_utils.models import TimeStampedModel
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.fields import GenericRelation
@@ -41,7 +42,7 @@ class Question(TimeStampedModel):
     details_rendered = models.TextField( editable=False, **nullable )             # HTML rendered details text from MD
     parse    = models.TextField( editable=False, **nullable )                     # The syntactic parse of the question text
     parse_time = models.FloatField( editable=False, **nullable )                  # The time it took to parse the question text
-    related  = models.ManyToManyField( 'self', editable=False )                   # Links between related questions
+    related  = models.ManyToManyField( 'self', editable=True )                   # Links between related questions
     template = models.ForeignKey(                                                 # Question template for similarity
                 'freebase.TextTemplate',
                 related_name='questions',
@@ -54,6 +55,9 @@ class Question(TimeStampedModel):
                 related_name='questions',
                 through='freebase.TopicAnnotation'
                )
+
+    ## Set custom manager on Question
+    objects  = QuestionManager()
 
     def get_absolute_url(self):
         """
