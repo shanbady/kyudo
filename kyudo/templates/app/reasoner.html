@@ -69,39 +69,41 @@
         </div><!-- dialogue information panel ends -->
 
         <!-- Context Panel -->
-
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h4 class="panel-title">User Context</h4>
-            </div><!-- end panel heading -->
-            <table class="table">
-              <tbody>
-                <tr>
-                  <td>User</td>
-                  <td>{{ user.first_name }} {{ user.last_name }}</td>
-                </tr>
-                <tr>
-                  <td>Current Time</td>
-                  <td>{% now "M j, Y \a\t h:i A" %}</td>
-                </tr>
-                <tr>
-                  <td>GPS Location</td>
-                  <td>
-                    <span class="hidden gps">
-                      (<span class="latitude"></span>, <span class="longitude"></span>)
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table><!-- end panel body -->
-            <div class="panel-footer">
-              <small class="text-muted pull-right">
-                <i class="fa fa-map-marker"></i>
-                <span class="gps-status-info">loading GPS info &hellip;</span>
-              </small>
-              <div class="clearfix"></div>
-            </div><!-- end panel footer -->
-          </div><!-- end context panel -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">User Context</h4>
+          </div><!-- end panel heading -->
+          <div class="panel-body">
+            <div id="google_canvas"></div>
+          </div>
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>User</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+              </tr>
+              <tr>
+                <td>Current Time</td>
+                <td>{% now "M j, Y \a\t h:i A" %}</td>
+              </tr>
+              <tr>
+                <td>GPS Location</td>
+                <td>
+                  <span class="hidden gps">
+                    (<span class="latitude"></span>, <span class="longitude"></span>)
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table><!-- end panel body -->
+          <div class="panel-footer">
+            <small class="text-muted pull-right">
+              <i class="fa fa-map-marker"></i>
+              <span class="gps-status-info">loading GPS info &hellip;</span>
+            </small>
+            <div class="clearfix"></div>
+          </div><!-- end panel footer -->
+        </div><!-- end context panel -->
 
       </div><!-- left sidebar ends -->
 
@@ -135,6 +137,11 @@
               <i class="fa fa-history"></i> History
             </a>
           </li>
+          <li>
+            <a href="#visualization" data-toggle="tab">
+              <i class="fa fa-area-chart"></i> Visualization
+            </a>
+          </li>
         </ul>
 
         <div class="tab-content">
@@ -166,32 +173,68 @@
                       <label class="form-label" for="id_question">Enter Question</label>
                       <input id="id_question" name="question" type="text" class="form-control" placeholder="Enter Question Text" />
                     </div>
-                    <div class="form-group">
-                      <label class="radio-inline">
-                        <input type="radio" name="goaltype" id="goaltype1" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
-                      </label>
-                      <label class="radio-inline">
-                        <input type="radio" name="goaltype" id="goaltype2" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
-                      </label>
+                    <div class="form-group row">
+                      <div class="col-xs-8">
+                        <label class="radio-inline">
+                          <input type="radio" name="goaltype" id="goaltype_subgoal" value="subgoal"{% if dialogue.current_goal %}checked{% endif %}> Subgoal
+                        </label>
+                        <label class="radio-inline">
+                          <input type="radio" name="goaltype" id="goaltype_newgoal" value="newgoal"{% if not dialogue.current_goal %}checked{% endif %}> New Goal
+                        </label>
+                      </div>
+                      <div class="col-xs-4">
+                        <button type="submit" class="btn btn-primary btn-xs pull-right">Submit</button>
+                      </div>
+                      <div class="clearfix"></div>
                     </div>
-                    <div class="form-group">
-                      <p><strong>Or</strong></p>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="id_subgoal_select">Select Related</label>
-                      <select id="id_subgoal_select" name="question" class="form-control">
-                        {% for related in dialogue.series.latest.question.related.all %}
-                        <option value="{{ related.id }}">{{ related }}</option>
-                        {% empty %}
-                        <option></option>
-                        {% endfor %}
-                      </select>
-                    </div>
-
                     <!-- Hidden Fields -->
                     <input type="hidden" id="id_current_goal" name="current_goal" value="{{ dialogue.current_goal.question.id }}" />
                     <input type="hidden" id="id_current_subgoal" name="current_subgoal" value="{{ dialogue.current_subgoal.question.id }}" />
+                    <input type="hidden" id="id_previous_goal" name="previous_goal" value="{{ dialogue.series.latest.question.id }}" />
                   </form>
+
+                  <hr />
+
+                  <div class="row">
+                    <div class="col-sm-6">
+                      {% if dialogue.series.latest %}
+                      <h5><i class="fa fa-sitemap"></i> Consider the following related subgoals:</h5>
+                      <ul class="list-unstyled" id="id_subgoal_select">
+
+                        {% for related in dialogue.series.latest.question.related.all %}
+                        <li>
+                          <a class="text-info subgoal goal-select"
+                             href="{{ related.get_absolute_url }}" target="_blank"
+                             data-question-id="{{ related.id }}">
+                             {{ related }}
+                           </a>
+                        </li>
+                        {% empty %}
+                        <li>No Related Goals</li>
+                        {% endfor %}
+
+                      </ul>
+                      {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                      {% if dialogue.series.latest %}
+                      <h5><i class="fa fa-code-fork"></i> Consider the following goal changes:</h5>
+                      <ul class="list-unstyled" id="id_goal_trajectory_select">
+                        {% for related in dialogue.suggestions %}
+                        <li>
+                          <a href="{{ related.get_absolute_url }}" target="_blank"
+                             class="newgoal goal-select"
+                             data-question-id="{{ related.id }}">
+                             {{ related }}
+                          </a>
+                        </li>
+                        {% empty %}
+                        <li>No Similar Goals</li>
+                        {% endfor %}
+                      </ul>
+                      {% endif %}
+                    </div>
+                  </div>
 
                 </div>
               </div>
@@ -216,6 +259,17 @@
             </div>
 
           </div><!-- interactive panel ends -->
+
+          <div id="visualization" class="tab-pane">
+
+            <!-- D3 Visualization of Goal Trajectory -->
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div id="goal-trajectory-visualization"></div>
+              </div>
+            </div>
+
+          </div>
 
         </div><!-- tab-content ends -->
 
@@ -279,7 +333,8 @@
   </script>
 
   <!-- Additional dependencies -->
-
+  <script src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 
   <!-- Primary Logics -->
   <script type="text/javascript">
@@ -317,6 +372,7 @@
         var question = $("#id_question").val();
         var is_subgoal = $("input[name=goaltype]:checked").val() == "subgoal";
         var parent_goal = is_subgoal ? parseInt($("#id_current_goal").val()) : '';
+        var prev_goal = $("#id_previous_goal").val();
 
         if (!question) return;
         if (!dialogue) {
@@ -332,6 +388,7 @@
         var data = {
           "parent_goal": parent_goal,
           "is_subgoal": is_subgoal,
+          "previous": prev_goal,
           "question": {
             "text": question
           }
@@ -360,8 +417,21 @@
       }
 
       // Handle the selection of subgoals in the interactive form
-      function onSubgoalSelect(e) {
-        console.log("selected!");
+      function onGoalSelect(e) {
+        e.preventDefault();
+        var target = $(e.target);
+
+        var isSubgoal = target.hasClass('subgoal');
+        if (isSubgoal) {
+          $("input[name=goaltype][value=subgoal]").prop("checked", true);
+        } else {
+          $("input[name=goaltype][value=newgoal]").prop("checked", true);
+        }
+
+        $("#id_question").val(target.text().trim());
+        $("#interactiveForm").submit();
+
+        return false;
       }
 
       // Handle all the logic for starting the dialogue
@@ -391,8 +461,7 @@
             updateDialogueInformation(data);
 
             // Clear the interactive form to a fresh state
-            $("#goaltype1").removeAttr("checked");
-            $("#goaltype2").attr("checked", "checked");
+            $("input[name=goaltype][value=newgoal]").prop("checked", true);
             $("a.goal").attr("href", "").text("");
             $("#id_subgoal_select").empty();
             $("#activity-history").empty();
@@ -505,7 +574,7 @@
 
       // Event Bindings
       $(document).on("click", "#btnToggleDialogue", {}, onToggleDialogue);
-      $("#id_subgoal_select").change(onSubgoalSelect);
+      $(".goal-select").click(onGoalSelect);
       $("#interactiveForm").submit(onInteractiveSubmit);
 
       // Start refresh loop
@@ -514,34 +583,64 @@
       }
 
       // Handle GPS Coordinates in context
-      navigator.geolocation.getCurrentPosition(GetLocation);
-      function GetLocation(location) {
-        // Set hidden form fields
-        $("#geo_latitude").val(location.coords.latitude);
-        $("#geo_longitude").val(location.coords.longitude);
-        $("#geo_accuracy").val(location.coords.accuracy);
+      if(!!navigator.geolocation) {
 
-        // Set display fields if they exist
-        $("span.latitude").text(location.coords.latitude.toFixed(6));
-        $("span.longitude").text(location.coords.longitude.toFixed(6));
-        $("span.gps").removeClass("hidden");
-        $("span.gps-status-info").text("GPS Fix.");
+        var map;
 
-        console.log("GPS coordinates acquired.");
+        var mapOptions = {
+            zoom: 15,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map(document.getElementById('google_canvas'), mapOptions);
+
+        navigator.geolocation.getCurrentPosition(function(position) {
+            // Set hidden form fields
+            $("#geo_latitude").val(position.coords.latitude);
+            $("#geo_longitude").val(position.coords.longitude);
+            $("#geo_accuracy").val(position.coords.accuracy);
+
+            // Set display fields if they exist
+            $("span.latitude").text(position.coords.latitude.toFixed(6));
+            $("span.longitude").text(position.coords.longitude.toFixed(6));
+            $("span.gps").removeClass("hidden");
+            $("span.gps-status-info").text("GPS Fix.");
+
+
+
+            var geolocate = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+            var marker = new google.maps.Marker({
+                position: geolocate,
+                map: map,
+                title: "User's Current Location",
+            });
+
+            map.setCenter(geolocate);
+
+            console.log("GPS coordinates acquired.");
+
+        });
+
+      } else {
+          document.getElementById('google_canvas').innerHTML = '<p>No Geolocation Support.</p>';
       }
 
       // Create the question suggestion engine
       var suggestions = new Bloodhound({
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
-        prefetch: "{% url 'api:typeahead-list' %}"
+        prefetch: {
+            url: "{% url 'api:typeahead-list' %}",
+            ttl: 60000
+        }
       });
 
       // Set typeahead for the question text box.
       $("input[name=question]").typeahead({
         hint: true,
         highlight: true,
-        minLength: 1
+        minLength: 3
       }, {
         name: 'suggestions',
         source: suggestions
@@ -549,5 +648,64 @@
 
     });
 
+  </script>
+
+  <!-- D3 Visualization -->
+  <script type="text/javascript">
+
+    $(function() {
+
+      var width   = $("#interactive").width();
+      var height  = 500;
+      var dataUrl = "{{ dialogue.get_graph_url }}";
+      var color   = d3.scale.category10();
+      var vizelem = "#goal-trajectory-visualization";
+
+      var force = d3.layout.force()
+        .charge(-180)
+        .linkDistance(60)
+        .size([width, height]);
+
+      var svg = d3.select(vizelem).append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Load data from endpoint
+      d3.json(dataUrl, function(error, graph) {
+        if (error) throw error;
+
+        force
+          .nodes(graph.nodes)
+          .links(graph.links)
+          .start();
+
+        var link = svg.selectAll(".link")
+            .data(graph.links)
+          .enter().append("line")
+            .attr("class", "link")
+            .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+        var node = svg.selectAll(".node")
+            .data(graph.nodes)
+          .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 8)
+            .style("fill", function(d) { return color(d.group); })
+            .call(force.drag);
+
+        node.append("title")
+          .text(function(d) { return d.name; });
+
+        force.on("tick", function() {
+          link.attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+
+          node.attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
+        });
+      });
+    });
   </script>
 {% endblock %}

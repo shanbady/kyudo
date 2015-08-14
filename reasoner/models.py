@@ -24,6 +24,7 @@ from django.core.urlresolvers import reverse
 from reasoner.managers import DialogueManager
 from reasoner.managers import QuestionSeriesManager
 from model_utils.models import TimeStampedModel
+from fugato.models import Question
 
 ##########################################################################
 ## Session Models
@@ -89,11 +90,26 @@ class Dialogue(models.Model):
             return delta
         return delta.total_seconds()
 
+    def suggestions(self):
+        """
+        Entry point for the reasoner: makes suggestions based on the current
+        state of the dialogue. This is a callback from the model so that it's
+        interactive and "semi-relatime", though this might need to be pushed
+        to the API for async reasoning.
+        """
+        return Question.objects.none()
+
     def get_api_detail_url(self):
         """
         Returns the API detail endpoint for the object
         """
         return reverse('api:dialogue-detail', args=(self.pk,))
+
+    def get_graph_url(self):
+        """
+        Returns the API detail endpoint for the graph of the object
+        """
+        return reverse('api:dialogue-graph', args=(self.pk,))
 
     class Meta:
         db_table = "dialogues"
