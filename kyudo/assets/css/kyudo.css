@@ -216,9 +216,19 @@ span.twitter-typeahead {
   margin: 0;
 }
 
+/* D3 Graphs */
 
+.node {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
 
+.link {
+    stroke: #999;
+    stroke-opacity: .6;
+}
 
+/* Google Maps */
 
 #google_canvas {
 	height:200px;

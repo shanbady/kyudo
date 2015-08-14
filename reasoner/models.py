@@ -105,6 +105,12 @@ class Dialogue(models.Model):
         """
         return reverse('api:dialogue-detail', args=(self.pk,))
 
+    def get_graph_url(self):
+        """
+        Returns the API detail endpoint for the graph of the object
+        """
+        return reverse('api:dialogue-graph', args=(self.pk,))
+
     class Meta:
         db_table = "dialogues"
         get_latest_by = 'started'

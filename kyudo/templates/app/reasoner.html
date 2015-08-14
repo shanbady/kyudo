@@ -137,6 +137,11 @@
               <i class="fa fa-history"></i> History
             </a>
           </li>
+          <li>
+            <a href="#visualization" data-toggle="tab">
+              <i class="fa fa-area-chart"></i> Visualization
+            </a>
+          </li>
         </ul>
 
         <div class="tab-content">
@@ -185,14 +190,17 @@
                     <!-- Hidden Fields -->
                     <input type="hidden" id="id_current_goal" name="current_goal" value="{{ dialogue.current_goal.question.id }}" />
                     <input type="hidden" id="id_current_subgoal" name="current_subgoal" value="{{ dialogue.current_subgoal.question.id }}" />
+                    <input type="hidden" id="id_previous_goal" name="previous_goal" value="{{ dialogue.series.latest.question.id }}" />
                   </form>
 
                   <hr />
 
                   <div class="row">
                     <div class="col-sm-6">
+                      {% if dialogue.series.latest %}
                       <h5><i class="fa fa-sitemap"></i> Consider the following related subgoals:</h5>
                       <ul class="list-unstyled" id="id_subgoal_select">
+
                         {% for related in dialogue.series.latest.question.related.all %}
                         <li>
                           <a class="text-info subgoal goal-select"
@@ -204,9 +212,12 @@
                         {% empty %}
                         <li>No Related Goals</li>
                         {% endfor %}
+
                       </ul>
+                      {% endif %}
                     </div>
                     <div class="col-sm-6">
+                      {% if dialogue.series.latest %}
                       <h5><i class="fa fa-code-fork"></i> Consider the following goal changes:</h5>
                       <ul class="list-unstyled" id="id_goal_trajectory_select">
                         {% for related in dialogue.suggestions %}
@@ -221,6 +232,7 @@
                         <li>No Similar Goals</li>
                         {% endfor %}
                       </ul>
+                      {% endif %}
                     </div>
                   </div>
 
@@ -247,6 +259,17 @@
             </div>
 
           </div><!-- interactive panel ends -->
+
+          <div id="visualization" class="tab-pane">
+
+            <!-- D3 Visualization of Goal Trajectory -->
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div id="goal-trajectory-visualization"></div>
+              </div>
+            </div>
+
+          </div>
 
         </div><!-- tab-content ends -->
 
@@ -311,6 +334,7 @@
 
   <!-- Additional dependencies -->
   <script src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 
   <!-- Primary Logics -->
   <script type="text/javascript">
@@ -348,6 +372,7 @@
         var question = $("#id_question").val();
         var is_subgoal = $("input[name=goaltype]:checked").val() == "subgoal";
         var parent_goal = is_subgoal ? parseInt($("#id_current_goal").val()) : '';
+        var prev_goal = $("#id_previous_goal").val();
 
         if (!question) return;
         if (!dialogue) {
@@ -363,6 +388,7 @@
         var data = {
           "parent_goal": parent_goal,
           "is_subgoal": is_subgoal,
+          "previous": prev_goal,
           "question": {
             "text": question
           }
@@ -604,27 +630,82 @@
       var suggestions = new Bloodhound({
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
-        prefetch: "{% url 'api:typeahead-list' %}"
+        prefetch: {
+            url: "{% url 'api:typeahead-list' %}",
+            ttl: 60000
+        }
       });
 
       // Set typeahead for the question text box.
       $("input[name=question]").typeahead({
         hint: true,
         highlight: true,
-        minLength: 1
+        minLength: 3
       }, {
         name: 'suggestions',
         source: suggestions
       });
 
-      // Rebind enter to submit the form
-      $("input[name=question]").keypress(function(event) {
-          if (event.which == 13) {
-              $("#interactiveForm").submit();
-          }
-      });
-
     });
 
+  </script>
+
+  <!-- D3 Visualization -->
+  <script type="text/javascript">
+
+    $(function() {
+
+      var width   = $("#interactive").width();
+      var height  = 500;
+      var dataUrl = "{{ dialogue.get_graph_url }}";
+      var color   = d3.scale.category10();
+      var vizelem = "#goal-trajectory-visualization";
+
+      var force = d3.layout.force()
+        .charge(-180)
+        .linkDistance(60)
+        .size([width, height]);
+
+      var svg = d3.select(vizelem).append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Load data from endpoint
+      d3.json(dataUrl, function(error, graph) {
+        if (error) throw error;
+
+        force
+          .nodes(graph.nodes)
+          .links(graph.links)
+          .start();
+
+        var link = svg.selectAll(".link")
+            .data(graph.links)
+          .enter().append("line")
+            .attr("class", "link")
+            .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+        var node = svg.selectAll(".node")
+            .data(graph.nodes)
+          .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 8)
+            .style("fill", function(d) { return color(d.group); })
+            .call(force.drag);
+
+        node.append("title")
+          .text(function(d) { return d.name; });
+
+        force.on("tick", function() {
+          link.attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+
+          node.attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
+        });
+      });
+    });
   </script>
 {% endblock %}

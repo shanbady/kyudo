@@ -53,6 +53,30 @@ class DialogueViewSet(viewsets.ModelViewSet):
     queryset = Dialogue.objects.order_by('-started')
     serializer_class   = DialogueSerializer
 
+    @detail_route(methods=['get'], permission_classes=[IsAuthenticated])
+    def graph(self, request, pk=None):
+        instance = self.get_object()
+        graph    = {'nodes':[], 'links':[]}
+        nodemap  = {}
+
+        for idx, qs in enumerate(instance.series.order_by('created')):
+            nodemap[qs.question.pk] = idx
+            graph['nodes'].append(
+                {'name': str(qs.question), 'group': 1 if qs.is_subgoal else 2}
+            )
+
+            if qs.parent_goal:
+                graph['links'].append(
+                    {'source': nodemap[qs.question.pk], 'target': nodemap[qs.parent_goal.pk], 'value': 5}
+                )
+
+            if qs.previous:
+                graph['links'].append(
+                    {'source': nodemap[qs.previous.pk], 'target': nodemap[qs.question.pk], 'value': 1}
+                )
+
+        return Response(graph)
+
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated])
     def complete(self, request, pk=None):
         instance   = self.get_object()
